@@ -15,7 +15,6 @@ const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
 const loanSchema = z.object({
   name: z.string().min(1, "Nombre requerido"),
   amount: z.number().positive("El monto debe ser mayor a 0"),
-  monthly_payment: z.number().positive("El pago mensual debe ser mayor a 0"),
   total_months: z
     .number()
     .int("Debe ser un número entero")
@@ -45,7 +44,6 @@ export default function EditLoanPage() {
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [monthlyPayment, setMonthlyPayment] = useState("");
   const [totalMonths, setTotalMonths] = useState<number>(0);
   const [customMonths, setCustomMonths] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -72,7 +70,6 @@ export default function EditLoanPage() {
 
       setName(personName);
       setAmount(String(data.amount));
-      setMonthlyPayment(String(data.monthly_payment));
       setTotalMonths(data.total_months);
       if (!MONTHS_OPTIONS.includes(data.total_months)) {
         setCustomMonths(true);
@@ -89,10 +86,10 @@ export default function EditLoanPage() {
     return isNaN(n) ? 0 : n;
   }, [amount]);
 
-  const parsedMonthly = useMemo(() => {
-    const n = parseFloat(monthlyPayment);
-    return isNaN(n) ? 0 : n;
-  }, [monthlyPayment]);
+  const monthlyPreview = useMemo(() => {
+    if (parsedAmount > 0 && totalMonths > 0) return parsedAmount / totalMonths;
+    return 0;
+  }, [parsedAmount, totalMonths]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -101,7 +98,6 @@ export default function EditLoanPage() {
     const data = {
       name,
       amount: parsedAmount,
-      monthly_payment: parsedMonthly,
       total_months: totalMonths,
       start_date: startDate,
       notes: notes.trim() || null,
@@ -122,6 +118,7 @@ export default function EditLoanPage() {
     }
 
     setSubmitting(true);
+    const computedMonthly = parsed.data.amount / parsed.data.total_months;
     try {
       if (direction === "given") {
         await updateLoan(
@@ -129,7 +126,7 @@ export default function EditLoanPage() {
           {
             borrower_name: parsed.data.name,
             amount: parsed.data.amount,
-            monthly_payment: parsed.data.monthly_payment,
+            monthly_payment: computedMonthly,
             total_months: parsed.data.total_months,
             start_date: parsed.data.start_date,
             notes: parsed.data.notes,
@@ -142,7 +139,7 @@ export default function EditLoanPage() {
           {
             lender_name: parsed.data.name,
             amount: parsed.data.amount,
-            monthly_payment: parsed.data.monthly_payment,
+            monthly_payment: computedMonthly,
             total_months: parsed.data.total_months,
             start_date: parsed.data.start_date,
             notes: parsed.data.notes,
@@ -228,32 +225,6 @@ export default function EditLoanPage() {
           )}
         </div>
 
-        {/* Monthly payment */}
-        <div>
-          <label
-            htmlFor="monthlyPayment"
-            className="mb-1.5 block text-sm font-medium"
-          >
-            Pago mensual
-          </label>
-          <input
-            id="monthlyPayment"
-            type="text"
-            inputMode="decimal"
-            placeholder="$0"
-            value={monthlyPayment}
-            onChange={(e) =>
-              setMonthlyPayment(e.target.value.replace(/[^0-9.]/g, ""))
-            }
-            className={`${inputClass} font-mono`}
-          />
-          {errors.monthly_payment && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.monthly_payment}
-            </p>
-          )}
-        </div>
-
         {/* Months */}
         <div>
           <label htmlFor="months" className="mb-1.5 block text-sm font-medium">
@@ -319,13 +290,13 @@ export default function EditLoanPage() {
         </div>
 
         {/* Summary preview */}
-        {parsedMonthly > 0 && totalMonths > 0 && (
+        {monthlyPreview > 0 && (
           <div className="rounded-xl bg-accent/5 px-4 py-3 text-center">
             <p className="text-sm text-muted-foreground">
               {direction === "given" ? "Recibirás" : "Pagarás"}
             </p>
             <p className="font-mono text-xl font-medium text-accent">
-              {formatCurrency(parsedMonthly)}
+              {formatCurrency(monthlyPreview)}
             </p>
             <p className="text-sm text-muted-foreground">
               por mes durante {totalMonths} meses
