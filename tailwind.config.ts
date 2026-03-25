@@ -1,19 +1,7 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
-import plugin from "tailwindcss/plugin";
-
-const safeArea = plugin(({ addUtilities }) => {
-  addUtilities({
-    ".pt-safe": { paddingTop: "env(safe-area-inset-top)" },
-    ".pb-safe": { paddingBottom: "env(safe-area-inset-bottom)" },
-    ".pl-safe": { paddingLeft: "env(safe-area-inset-left)" },
-    ".pr-safe": { paddingRight: "env(safe-area-inset-right)" },
-    ".mt-safe": { marginTop: "env(safe-area-inset-top)" },
-    ".mb-safe": { marginBottom: "env(safe-area-inset-bottom)" },
-    ".ml-safe": { marginLeft: "env(safe-area-inset-left)" },
-    ".mr-safe": { marginRight: "env(safe-area-inset-right)" },
-  });
-});
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const safeArea = require("tailwindcss-safe-area");
 
 const config: Config = {
   content: [
