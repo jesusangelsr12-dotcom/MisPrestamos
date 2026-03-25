@@ -155,7 +155,7 @@ export default function LoansPage() {
       {/* FAB */}
       <Link
         href={`/loans/new?type=${tab}`}
-        className="fixed bottom-6 right-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-accent text-white shadow-md mb-safe"
+        className="fixed bottom-24 right-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-accent text-white shadow-md"
       >
         <svg
           width="24"
