@@ -5,10 +5,12 @@ import { motion } from "framer-motion";
 import type { MSIExpenseWithCard } from "@/types";
 import { OwnerTag } from "@/components/features/OwnerTag";
 import { PaymentHistorySheet } from "@/components/features/PaymentHistorySheet";
+import { PaymentModal } from "@/components/features/PaymentModal";
 
 interface MSICardProps {
   expense: MSIExpenseWithCard;
-  onMarkPaid: (id: string) => void;
+  paidReal?: number;
+  onMarkPaid: (id: string, amount: number, monthsCovered: number) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }
@@ -28,21 +30,21 @@ function formatCurrency(n: number): string {
   });
 }
 
-export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps) {
+export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSICardProps) {
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const { card } = expense;
   const pct = expense.months > 0 ? (expense.months_paid / expense.months) * 100 : 0;
   const isComplete = expense.months_paid >= expense.months;
-  const remaining = expense.monthly_amount * (expense.months - expense.months_paid);
-  const paid = expense.monthly_amount * expense.months_paid;
+  const remainingMonths = expense.months - expense.months_paid;
+  const estimatedRemaining = expense.monthly_amount * remainingMonths;
+  const paidDisplay = paidReal !== undefined ? paidReal : expense.monthly_amount * expense.months_paid;
   const progressColor = getProgressColor(pct);
+  const isFinalMonth = expense.months_paid === expense.months - 1;
 
   return (
     <>
-      <div
-        className="rounded-2xl bg-white p-[18px]"
-        style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
-      >
+      <div className="rounded-2xl bg-white p-[18px]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
         {/* Header row */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -52,9 +54,7 @@ export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps)
               <span className="text-[12px] text-[#A8A8A8]">{card.bank} · {card.name}</span>
             </div>
             {expense.owner === "other" && expense.owner_name && (
-              <div className="mt-1.5">
-                <OwnerTag name={expense.owner_name} />
-              </div>
+              <div className="mt-1.5"><OwnerTag name={expense.owner_name} /></div>
             )}
           </div>
           <p className="font-mono text-[26px] font-medium leading-tight text-[#1A1A1A]">
@@ -65,13 +65,7 @@ export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps)
         {/* Progress bar */}
         <div className="mt-4">
           <div className="h-1 w-full overflow-hidden rounded-full bg-[#E8E8E5]">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ backgroundColor: progressColor }}
-              initial={{ width: 0 }}
-              animate={{ width: `${pct}%` }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            />
+            <motion.div className="h-full rounded-full" style={{ backgroundColor: progressColor }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
           </div>
         </div>
 
@@ -79,11 +73,11 @@ export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps)
         <div className="mt-3 flex items-center justify-between">
           <div>
             <span className="text-[11px] text-[#A8A8A8]">Pagado </span>
-            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(paid)}</span>
+            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(paidDisplay)}</span>
           </div>
           <div>
-            <span className="text-[11px] text-[#A8A8A8]">Restante </span>
-            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(remaining)}</span>
+            <span className="text-[11px] text-[#A8A8A8]">Est. restante </span>
+            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(estimatedRemaining)}</span>
           </div>
           <div>
             <span className="text-[11px] text-[#A8A8A8]">Meses </span>
@@ -94,16 +88,9 @@ export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps)
         {/* Action button */}
         <div className="mt-3">
           {isComplete ? (
-            <div className="flex h-11 items-center justify-center rounded-xl bg-[#E6F7F3] text-[15px] font-medium text-[#00A878]">
-              ✓ Completado
-            </div>
+            <div className="flex h-11 items-center justify-center rounded-xl bg-[#E6F7F3] text-[15px] font-medium text-[#00A878]">✓ Completado</div>
           ) : (
-            <motion.button
-              type="button"
-              onClick={() => onMarkPaid(expense.id)}
-              whileTap={{ scale: 0.97 }}
-              className="flex h-11 w-full items-center justify-center rounded-xl border border-[#2C6CFF] text-[15px] font-medium text-[#2C6CFF]"
-            >
+            <motion.button type="button" onClick={() => setPaymentOpen(true)} whileTap={{ scale: 0.97 }} className="flex h-11 w-full items-center justify-center rounded-xl border border-[#2C6CFF] text-[15px] font-medium text-[#2C6CFF]">
               Marcar mes pagado
             </motion.button>
           )}
@@ -111,13 +98,7 @@ export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps)
 
         {/* Ver pagos */}
         {expense.months_paid > 0 && (
-          <button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            className="mt-2 w-full text-center text-[13px] font-medium text-[#2C6CFF]"
-          >
-            Ver pagos
-          </button>
+          <button type="button" onClick={() => setHistoryOpen(true)} className="mt-2 w-full text-center text-[13px] font-medium text-[#2C6CFF]">Ver pagos</button>
         )}
 
         {/* Edit / Delete */}
@@ -126,6 +107,21 @@ export function MSICard({ expense, onMarkPaid, onEdit, onDelete }: MSICardProps)
           <button type="button" onClick={() => onDelete(expense.id)} className="flex h-9 flex-1 items-center justify-center rounded-[10px] text-[13px] font-medium text-[#EF4444]">Eliminar</button>
         </div>
       </div>
+
+      <PaymentModal
+        isOpen={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        onConfirm={(amount, monthsCovered) => {
+          setPaymentOpen(false);
+          onMarkPaid(expense.id, amount, monthsCovered);
+        }}
+        monthlyAmount={expense.monthly_amount}
+        remainingMonths={remainingMonths}
+        currentMonth={expense.months_paid + 1}
+        totalMonths={expense.months}
+        isFinalMonth={isFinalMonth}
+        finalPaymentAmount={expense.has_final_payment ? expense.final_payment_amount : null}
+      />
 
       <PaymentHistorySheet
         isOpen={historyOpen}

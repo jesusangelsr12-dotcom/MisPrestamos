@@ -16,6 +16,8 @@ const msiSchema = z.object({
   start_date: z.string().min(1, "Fecha requerida"),
   owner: z.enum(["me", "other"] as const),
   owner_name: z.string().nullable(),
+  has_final_payment: z.boolean(),
+  final_payment_amount: z.number().positive("Debe ser mayor a 0").nullable(),
 });
 
 function formatCurrency(n: number): string {
@@ -42,6 +44,8 @@ export default function EditMSIPage() {
   const [owner, setOwner] = useState<ExpenseOwner>("me");
   const [ownerName, setOwnerName] = useState("");
   const [customMonths, setCustomMonths] = useState(false);
+  const [hasFinalPayment, setHasFinalPayment] = useState(false);
+  const [finalPaymentAmount, setFinalPaymentAmount] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,6 +66,8 @@ export default function EditMSIPage() {
       setStartDate(data.start_date);
       setOwner(data.owner);
       setOwnerName(data.owner_name ?? "");
+      setHasFinalPayment(data.has_final_payment);
+      if (data.final_payment_amount) setFinalPaymentAmount(String(data.final_payment_amount));
       setLoadingExpense(false);
     }
     load();
@@ -81,6 +87,7 @@ export default function EditMSIPage() {
     e.preventDefault();
     setErrors({});
 
+    const parsedFinal = hasFinalPayment ? parseFloat(finalPaymentAmount) || null : null;
     const data = {
       description,
       total_amount: parsedAmount,
@@ -88,6 +95,8 @@ export default function EditMSIPage() {
       start_date: startDate,
       owner,
       owner_name: owner === "other" ? ownerName : null,
+      has_final_payment: hasFinalPayment,
+      final_payment_amount: parsedFinal,
     };
 
     const parsed = msiSchema.safeParse(data);
@@ -109,6 +118,11 @@ export default function EditMSIPage() {
 
     if (owner === "other" && !ownerName.trim()) {
       setErrors({ owner_name: "Nombre requerido" });
+      return;
+    }
+
+    if (hasFinalPayment && (!parsedFinal || parsedFinal <= 0)) {
+      setErrors({ final_payment_amount: "Monto del último pago requerido" });
       return;
     }
 
@@ -326,6 +340,40 @@ export default function EditMSIPage() {
             )}
           </div>
         )}
+
+        {/* Final payment */}
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-medium text-[#1A1A1A]">¿Tiene pago final diferente?</span>
+            <button
+              type="button"
+              onClick={() => { setHasFinalPayment((v) => !v); if (hasFinalPayment) setFinalPaymentAmount(""); }}
+              className={`relative h-6 w-11 rounded-full transition-colors ${hasFinalPayment ? "bg-[#2C6CFF]" : "bg-[#E8E8E5]"}`}
+            >
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform shadow-sm ${hasFinalPayment ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+            </button>
+          </div>
+          {hasFinalPayment && (
+            <div className="mt-3">
+              <label htmlFor="finalPayment" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto del último pago</label>
+              <input
+                id="finalPayment"
+                type="text"
+                inputMode="decimal"
+                placeholder="Ej. 5,000"
+                value={finalPaymentAmount}
+                onChange={(e) => setFinalPaymentAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                className={`${inputClass} font-mono`}
+              />
+              {monthlyPreview > 0 && months > 0 && (
+                <p className="mt-1 text-[12px] text-[#A8A8A8]">El mes {months} tendrá este monto en lugar de {formatCurrency(monthlyPreview)}</p>
+              )}
+              {errors.final_payment_amount && (
+                <p className="mt-1 text-[13px] text-[#EF4444]">{errors.final_payment_amount}</p>
+              )}
+            </div>
+          )}
+        </div>
 
         {errors.form && (
           <p className="text-[14px] text-[#EF4444]">{errors.form}</p>

@@ -34,24 +34,34 @@ export function calculateMonthlyProjection(
       if (expense.months_paid >= expense.months) continue;
 
       const startMonth = getMonthStart(new Date(expense.start_date));
-      // The first unpaid month is start + months_paid
       const firstUnpaidMonth = addMonths(startMonth, expense.months_paid);
-      // The last payment month is start + months - 1
       const lastPaymentMonth = addMonths(startMonth, expense.months - 1);
 
       if (targetMonth >= firstUnpaidMonth && targetMonth <= lastPaymentMonth) {
-        msiTotal += expense.monthly_amount;
+        // Determine which month number this is (1-indexed)
+        const monthNumber =
+          (targetMonth.getFullYear() - startMonth.getFullYear()) * 12 +
+          (targetMonth.getMonth() - startMonth.getMonth()) + 1;
+
+        // Use final_payment_amount for the last month if has_final_payment
+        if (
+          monthNumber === expense.months &&
+          expense.has_final_payment &&
+          expense.final_payment_amount
+        ) {
+          msiTotal += expense.final_payment_amount;
+        } else {
+          msiTotal += expense.monthly_amount;
+        }
       }
     }
 
     let loansGivenTotal = 0;
     for (const loan of loansGiven) {
       if (loan.months_paid >= loan.total_months) continue;
-
       const startMonth = getMonthStart(new Date(loan.start_date));
       const firstUnpaidMonth = addMonths(startMonth, loan.months_paid);
       const lastPaymentMonth = addMonths(startMonth, loan.total_months - 1);
-
       if (targetMonth >= firstUnpaidMonth && targetMonth <= lastPaymentMonth) {
         loansGivenTotal += loan.monthly_payment;
       }
@@ -60,11 +70,9 @@ export function calculateMonthlyProjection(
     let loansReceivedTotal = 0;
     for (const loan of loansReceived) {
       if (loan.months_paid >= loan.total_months) continue;
-
       const startMonth = getMonthStart(new Date(loan.start_date));
       const firstUnpaidMonth = addMonths(startMonth, loan.months_paid);
       const lastPaymentMonth = addMonths(startMonth, loan.total_months - 1);
-
       if (targetMonth >= firstUnpaidMonth && targetMonth <= lastPaymentMonth) {
         loansReceivedTotal += loan.monthly_payment;
       }

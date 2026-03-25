@@ -18,7 +18,7 @@ interface UseMSIReturn {
   createExpense: (data: MSIInput) => Promise<void>;
   updateExpense: (id: string, data: Partial<Omit<MSIInput, "card_id">>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
-  markPaid: (id: string) => Promise<void>;
+  markPaid: (id: string, amount: number, monthsCovered: number) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -79,18 +79,17 @@ export function useMSI(): UseMSIReturn {
   );
 
   const markPaid = useCallback(
-    async (id: string) => {
+    async (id: string, amount: number, monthsCovered: number) => {
       // Optimistic update
       setExpenses((prev) =>
         prev.map((e) =>
-          e.id === id ? { ...e, months_paid: Math.min(e.months_paid + 1, e.months) } : e
+          e.id === id ? { ...e, months_paid: Math.min(e.months_paid + monthsCovered, e.months) } : e
         )
       );
 
       try {
-        await markMSIMonthPaid(id);
+        await markMSIMonthPaid(id, amount, monthsCovered);
       } catch (err) {
-        // Rollback
         await loadExpenses();
         throw err;
       }

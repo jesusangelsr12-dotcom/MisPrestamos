@@ -44,8 +44,8 @@ export default function MSIPage() {
     return Array.from(groups.values());
   }, [filtered]);
 
-  async function handleMarkPaid(id: string) {
-    try { await markPaid(id); } catch (err) { setDeleteError(err instanceof Error ? err.message : "Error"); }
+  async function handleMarkPaid(id: string, amount: number, monthsCovered: number) {
+    try { await markPaid(id, amount, monthsCovered); } catch (err) { setDeleteError(err instanceof Error ? err.message : "Error"); }
   }
 
   async function handleDelete(id: string) {

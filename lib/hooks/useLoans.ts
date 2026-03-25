@@ -24,7 +24,7 @@ interface UseLoansReturn {
   createLoan: (data: LoanGivenInput | LoanReceivedInput, type: LoanType) => Promise<void>;
   updateLoan: (id: string, data: Partial<LoanGivenInput> | Partial<LoanReceivedInput>, type: LoanType) => Promise<void>;
   deleteLoan: (id: string, type: LoanType) => Promise<void>;
-  markPaid: (id: string, type: LoanType) => Promise<void>;
+  markPaid: (id: string, type: LoanType, amount: number, monthsCovered: number) => Promise<void>;
   refresh: () => Promise<void>;
 }
 
@@ -115,13 +115,12 @@ export function useLoans(): UseLoansReturn {
   );
 
   const markPaid = useCallback(
-    async (id: string, type: LoanType) => {
-      // Optimistic update
+    async (id: string, type: LoanType, amount: number, monthsCovered: number) => {
       if (type === "given") {
         setGiven((prev) =>
           prev.map((l) =>
             l.id === id
-              ? { ...l, months_paid: Math.min(l.months_paid + 1, l.total_months) }
+              ? { ...l, months_paid: Math.min(l.months_paid + monthsCovered, l.total_months) }
               : l
           )
         );
@@ -129,14 +128,14 @@ export function useLoans(): UseLoansReturn {
         setReceived((prev) =>
           prev.map((l) =>
             l.id === id
-              ? { ...l, months_paid: Math.min(l.months_paid + 1, l.total_months) }
+              ? { ...l, months_paid: Math.min(l.months_paid + monthsCovered, l.total_months) }
               : l
           )
         );
       }
 
       try {
-        await markLoanMonthPaid(id, type);
+        await markLoanMonthPaid(id, type, amount, monthsCovered);
       } catch (err) {
         await load();
         throw err;

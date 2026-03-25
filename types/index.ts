@@ -20,6 +20,8 @@ export interface MSIExpense {
   start_date: string;
   owner: ExpenseOwner;
   owner_name: string | null;
+  has_final_payment: boolean;
+  final_payment_amount: number | null;
   created_at: string;
 }
 
@@ -66,6 +68,7 @@ export interface PaymentHistory {
   entity_name: string;
   month_number: number;
   amount: number;
+  months_covered: number;
   paid_at: string;
   created_at: string;
 }

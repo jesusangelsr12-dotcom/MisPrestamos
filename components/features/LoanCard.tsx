@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import type { LoanGiven, LoanReceived } from "@/types";
 import type { LoanType } from "@/lib/supabase/loans";
 import { PaymentHistorySheet } from "@/components/features/PaymentHistorySheet";
+import { PaymentModal } from "@/components/features/PaymentModal";
 
 interface LoanCardProps {
   loan: LoanGiven | LoanReceived;
   type: LoanType;
-  onMarkPaid: (id: string, type: LoanType) => void;
+  paidReal?: number;
+  onMarkPaid: (id: string, type: LoanType, amount: number, monthsCovered: number) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string, type: LoanType) => void;
 }
@@ -29,21 +31,23 @@ function getPersonName(loan: LoanGiven | LoanReceived, type: LoanType): string {
   return (loan as LoanReceived).lender_name;
 }
 
-export function LoanCard({ loan, type, onMarkPaid, onEdit, onDelete }: LoanCardProps) {
+export function LoanCard({ loan, type, paidReal, onMarkPaid, onEdit, onDelete }: LoanCardProps) {
   const [notesOpen, setNotesOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const pct = loan.total_months > 0 ? (loan.months_paid / loan.total_months) * 100 : 0;
   const isComplete = loan.months_paid >= loan.total_months;
-  const paid = loan.monthly_payment * loan.months_paid;
-  const remaining = loan.monthly_payment * (loan.total_months - loan.months_paid);
+  const remainingMonths = loan.total_months - loan.months_paid;
+  const paidDisplay = paidReal !== undefined ? paidReal : loan.monthly_payment * loan.months_paid;
+  const estimatedRemaining = loan.monthly_payment * remainingMonths;
   const progressColor = getProgressColor(pct);
   const personName = getPersonName(loan, type);
   const entityType = type === "given" ? "loan_given" as const : "loan_received" as const;
+  const isFinalMonth = loan.months_paid === loan.total_months - 1;
 
   return (
     <>
       <div className="rounded-2xl bg-white p-[18px]" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-        {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-[15px] font-semibold text-[#1A1A1A]">{personName}</p>
@@ -59,22 +63,20 @@ export function LoanCard({ loan, type, onMarkPaid, onEdit, onDelete }: LoanCardP
           </div>
         </div>
 
-        {/* Progress bar */}
         <div className="mt-4">
           <div className="h-1 w-full overflow-hidden rounded-full bg-[#E8E8E5]">
             <motion.div className="h-full rounded-full" style={{ backgroundColor: progressColor }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
           </div>
         </div>
 
-        {/* Footer stats */}
         <div className="mt-3 flex items-center justify-between">
           <div>
             <span className="text-[11px] text-[#A8A8A8]">Pagado </span>
-            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(paid)}</span>
+            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(paidDisplay)}</span>
           </div>
           <div>
-            <span className="text-[11px] text-[#A8A8A8]">Restante </span>
-            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(remaining)}</span>
+            <span className="text-[11px] text-[#A8A8A8]">Est. restante </span>
+            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{formatCurrency(estimatedRemaining)}</span>
           </div>
           <div>
             <span className="text-[11px] text-[#A8A8A8]">Meses </span>
@@ -82,7 +84,6 @@ export function LoanCard({ loan, type, onMarkPaid, onEdit, onDelete }: LoanCardP
           </div>
         </div>
 
-        {/* Notes */}
         {loan.notes && (
           <button type="button" onClick={() => setNotesOpen((o) => !o)} className="mt-3 w-full text-left">
             <p className="text-[12px] font-medium text-[#2C6CFF]">{notesOpen ? "▾ Ocultar nota" : "▸ Ver nota"}</p>
@@ -90,34 +91,40 @@ export function LoanCard({ loan, type, onMarkPaid, onEdit, onDelete }: LoanCardP
           </button>
         )}
 
-        {/* Action button */}
         <div className="mt-3">
           {isComplete ? (
             <div className="flex h-11 items-center justify-center rounded-xl bg-[#E6F7F3] text-[15px] font-medium text-[#00A878]">✓ Completado</div>
           ) : (
-            <motion.button type="button" onClick={() => onMarkPaid(loan.id, type)} whileTap={{ scale: 0.97 }} className="flex h-11 w-full items-center justify-center rounded-xl border border-[#2C6CFF] text-[15px] font-medium text-[#2C6CFF]">
+            <motion.button type="button" onClick={() => setPaymentOpen(true)} whileTap={{ scale: 0.97 }} className="flex h-11 w-full items-center justify-center rounded-xl border border-[#2C6CFF] text-[15px] font-medium text-[#2C6CFF]">
               Marcar mes pagado
             </motion.button>
           )}
         </div>
 
-        {/* Ver pagos */}
         {loan.months_paid > 0 && (
-          <button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            className="mt-2 w-full text-center text-[13px] font-medium text-[#2C6CFF]"
-          >
-            Ver pagos
-          </button>
+          <button type="button" onClick={() => setHistoryOpen(true)} className="mt-2 w-full text-center text-[13px] font-medium text-[#2C6CFF]">Ver pagos</button>
         )}
 
-        {/* Edit / Delete */}
         <div className="mt-2 flex gap-2">
           <button type="button" onClick={() => onEdit(loan.id)} className="flex h-9 flex-1 items-center justify-center rounded-[10px] text-[13px] font-medium text-[#6B6B6B]">Editar</button>
           <button type="button" onClick={() => onDelete(loan.id, type)} className="flex h-9 flex-1 items-center justify-center rounded-[10px] text-[13px] font-medium text-[#EF4444]">Eliminar</button>
         </div>
       </div>
+
+      <PaymentModal
+        isOpen={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        onConfirm={(amount, monthsCovered) => {
+          setPaymentOpen(false);
+          onMarkPaid(loan.id, type, amount, monthsCovered);
+        }}
+        monthlyAmount={loan.monthly_payment}
+        remainingMonths={remainingMonths}
+        currentMonth={loan.months_paid + 1}
+        totalMonths={loan.total_months}
+        isFinalMonth={isFinalMonth}
+        finalPaymentAmount={null}
+      />
 
       <PaymentHistorySheet
         isOpen={historyOpen}

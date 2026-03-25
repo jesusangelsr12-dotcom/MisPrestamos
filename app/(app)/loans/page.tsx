@@ -19,9 +19,9 @@ export default function LoansPage() {
 
   const list = tab === "given" ? given : received;
 
-  async function handleMarkPaid(id: string, type: LoanType) {
+  async function handleMarkPaid(id: string, type: LoanType, amount: number, monthsCovered: number) {
     setActionError("");
-    try { await markPaid(id, type); } catch (err) { setActionError(err instanceof Error ? err.message : "Error"); }
+    try { await markPaid(id, type, amount, monthsCovered); } catch (err) { setActionError(err instanceof Error ? err.message : "Error"); }
   }
 
   async function handleDelete(id: string, type: LoanType) {

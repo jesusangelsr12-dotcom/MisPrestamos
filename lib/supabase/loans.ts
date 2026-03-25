@@ -132,7 +132,9 @@ export async function deleteLoanById(id: string, type: LoanType): Promise<void> 
 
 export async function markLoanMonthPaid(
   id: string,
-  type: LoanType
+  type: LoanType,
+  amount: number,
+  monthsCovered: number = 1
 ): Promise<LoanGiven | LoanReceived> {
   const supabase = createClient();
   const table = type === "given" ? "loans_given" : "loans_received";
@@ -147,7 +149,7 @@ export async function markLoanMonthPaid(
     throw new Error("Este préstamo ya está completado");
   }
 
-  const newMonthsPaid = current.months_paid + 1;
+  const newMonthsPaid = Math.min(current.months_paid + monthsCovered, current.total_months);
 
   const { data, error } = await supabase
     .from(table)
@@ -163,13 +165,18 @@ export async function markLoanMonthPaid(
   const entityName = type === "given"
     ? (current as { borrower_name: string }).borrower_name
     : (current as { lender_name: string }).lender_name;
-  await supabase.from("payment_history").insert({
-    entity_type: entityType,
-    entity_id: id,
-    entity_name: entityName,
-    month_number: newMonthsPaid,
-    amount: current.monthly_payment,
-  });
+  try {
+    await supabase.from("payment_history").insert({
+      entity_type: entityType,
+      entity_id: id,
+      entity_name: entityName,
+      month_number: current.months_paid + 1,
+      amount,
+      months_covered: monthsCovered,
+    });
+  } catch (err) {
+    console.error("[markLoanMonthPaid] Failed to insert history:", err);
+  }
 
   return data as LoanGiven | LoanReceived;
 }
