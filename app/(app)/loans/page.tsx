@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { LoanCard } from "@/components/features/LoanCard";
+import { BottomNav } from "@/components/features/BottomNav";
 import { useLoans } from "@/lib/hooks/useLoans";
 import type { LoanType } from "@/lib/supabase/loans";
 
@@ -40,7 +41,7 @@ export default function LoansPage() {
   }
 
   return (
-    <main className="min-h-screen px-5 pb-safe pt-safe">
+    <main className="min-h-screen px-5 pb-20 pt-safe">
       {/* Header */}
       <div className="pb-4 pt-6">
         <h1 className="text-2xl font-bold font-display">Préstamos</h1>
@@ -170,6 +171,8 @@ export default function LoansPage() {
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       </Link>
+
+      <BottomNav />
     </main>
   );
 }

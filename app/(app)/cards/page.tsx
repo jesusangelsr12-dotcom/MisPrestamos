@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardListItem } from "@/components/features/CardListItem";
 import { useCards } from "@/lib/hooks/useCards";
+import { BottomNav } from "@/components/features/BottomNav";
 import type { Card } from "@/types";
 
 export default function CardsPage() {
@@ -30,7 +31,7 @@ export default function CardsPage() {
   }
 
   return (
-    <main className="min-h-screen px-5 pb-safe pt-safe">
+    <main className="min-h-screen px-5 pb-20 pt-safe">
       {/* Header */}
       <div className="pb-4 pt-6">
         <h1 className="text-2xl font-bold font-display">Tarjetas</h1>
@@ -198,6 +199,8 @@ export default function CardsPage() {
           </>
         )}
       </AnimatePresence>
+
+      <BottomNav />
     </main>
   );
 }

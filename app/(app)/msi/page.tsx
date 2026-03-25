@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { MSICard } from "@/components/features/MSICard";
+import { BottomNav } from "@/components/features/BottomNav";
 import { useMSI } from "@/lib/hooks/useMSI";
 
 type FilterType = "all" | "me" | "other" | string; // string = card_id
@@ -77,7 +78,7 @@ export default function MSIPage() {
   const chipInactive = "bg-muted text-muted-foreground";
 
   return (
-    <main className="min-h-screen px-5 pb-safe pt-safe">
+    <main className="min-h-screen px-5 pb-20 pt-safe">
       {/* Header */}
       <div className="pb-4 pt-6">
         <h1 className="text-2xl font-bold font-display">Gastos MSI</h1>
@@ -238,6 +239,8 @@ export default function MSIPage() {
           </svg>
         </Link>
       )}
+
+      <BottomNav />
     </main>
   );
 }
