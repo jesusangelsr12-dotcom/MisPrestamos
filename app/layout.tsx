@@ -10,6 +10,9 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Cuotas",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {

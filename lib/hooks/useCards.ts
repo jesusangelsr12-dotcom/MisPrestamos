@@ -29,9 +29,15 @@ export function useCards(): UseCardsReturn {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchCards();
+
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
+      );
+
+      const data = await Promise.race([fetchCards(), timeout]);
       setCards(data);
     } catch (err) {
+      console.error("[useCards] Error loading cards:", err);
       setError(err instanceof Error ? err.message : "Error al cargar tarjetas");
     } finally {
       setLoading(false);

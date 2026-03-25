@@ -8,7 +8,7 @@ import { useCards } from "@/lib/hooks/useCards";
 import type { Card } from "@/types";
 
 export default function CardsPage() {
-  const { cards, loading, deleteCard } = useCards();
+  const { cards, loading, error: loadError, deleteCard, refresh } = useCards();
   const [selected, setSelected] = useState<Card | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -40,6 +40,17 @@ export default function CardsPage() {
       {loading ? (
         <div className="flex h-40 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-col items-center justify-center gap-3 pt-20">
+          <p className="text-sm text-red-500">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => refresh()}
+            className="rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white"
+          >
+            Reintentar
+          </button>
         </div>
       ) : cards.length === 0 ? (
         /* Empty state */
