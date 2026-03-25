@@ -101,7 +101,7 @@ export async function markMSIMonthPaid(id: string): Promise<MSIExpense> {
   // Fetch current state
   const { data: current, error: fetchError } = await supabase
     .from("msi_expenses")
-    .select("months_paid, months")
+    .select("months_paid, months, description, monthly_amount")
     .eq("id", id)
     .single();
 
@@ -110,13 +110,25 @@ export async function markMSIMonthPaid(id: string): Promise<MSIExpense> {
     throw new Error("Este gasto ya está completado");
   }
 
+  const newMonthsPaid = current.months_paid + 1;
+
   const { data, error } = await supabase
     .from("msi_expenses")
-    .update({ months_paid: current.months_paid + 1 })
+    .update({ months_paid: newMonthsPaid })
     .eq("id", id)
     .select()
     .single();
 
   if (error) throw new Error(error.message);
+
+  // Record payment history
+  await supabase.from("payment_history").insert({
+    entity_type: "msi",
+    entity_id: id,
+    entity_name: current.description,
+    month_number: newMonthsPaid,
+    amount: current.monthly_amount,
+  });
+
   return data as MSIExpense;
 }

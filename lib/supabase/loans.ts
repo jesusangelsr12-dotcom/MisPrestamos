@@ -136,10 +136,9 @@ export async function markLoanMonthPaid(
 ): Promise<LoanGiven | LoanReceived> {
   const supabase = createClient();
   const table = type === "given" ? "loans_given" : "loans_received";
-
   const { data: current, error: fetchError } = await supabase
     .from(table)
-    .select("months_paid, total_months")
+    .select("*")
     .eq("id", id)
     .single();
 
@@ -148,13 +147,29 @@ export async function markLoanMonthPaid(
     throw new Error("Este préstamo ya está completado");
   }
 
+  const newMonthsPaid = current.months_paid + 1;
+
   const { data, error } = await supabase
     .from(table)
-    .update({ months_paid: current.months_paid + 1 })
+    .update({ months_paid: newMonthsPaid })
     .eq("id", id)
     .select()
     .single();
 
   if (error) throw new Error(error.message);
+
+  // Record payment history
+  const entityType = type === "given" ? "loan_given" : "loan_received";
+  const entityName = type === "given"
+    ? (current as { borrower_name: string }).borrower_name
+    : (current as { lender_name: string }).lender_name;
+  await supabase.from("payment_history").insert({
+    entity_type: entityType,
+    entity_id: id,
+    entity_name: entityName,
+    month_number: newMonthsPaid,
+    amount: current.monthly_payment,
+  });
+
   return data as LoanGiven | LoanReceived;
 }

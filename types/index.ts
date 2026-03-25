@@ -56,3 +56,16 @@ export interface PinAuth {
   hashed_pin: string;
   created_at: string;
 }
+
+export type PaymentEntityType = "msi" | "loan_given" | "loan_received";
+
+export interface PaymentHistory {
+  id: string;
+  entity_type: PaymentEntityType;
+  entity_id: string;
+  entity_name: string;
+  month_number: number;
+  amount: number;
+  paid_at: string;
+  created_at: string;
+}
