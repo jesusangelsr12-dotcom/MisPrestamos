@@ -47,6 +47,10 @@ export interface LoanReceived {
   created_at: string;
 }
 
+export interface MSIExpenseWithCard extends MSIExpense {
+  card: Pick<Card, "name" | "bank" | "color" | "last_four">;
+}
+
 export interface PinAuth {
   id: string;
   hashed_pin: string;
