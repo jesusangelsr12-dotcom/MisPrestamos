@@ -13,7 +13,7 @@ const msiSchema = z.object({
   card_id: z.string().min(1, "Selecciona una tarjeta"),
   description: z.string().min(1, "Descripción requerida"),
   total_amount: z.number().positive("El monto debe ser mayor a 0"),
-  months: z.number().refine((v) => MONTHS_OPTIONS.includes(v), "Meses inválidos"),
+  months: z.number().int("Debe ser un número entero").min(1, "Mínimo 1 mes").max(120, "Máximo 120 meses"),
   start_date: z.string().min(1, "Fecha requerida"),
   owner: z.enum(["me", "other"] as const),
   owner_name: z.string().nullable(),
@@ -42,6 +42,7 @@ export default function NewMSIPage() {
   );
   const [owner, setOwner] = useState<ExpenseOwner>("me");
   const [ownerName, setOwnerName] = useState("");
+  const [customMonths, setCustomMonths] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -198,22 +199,60 @@ export default function NewMSIPage() {
           <label htmlFor="months" className="mb-1.5 block text-sm font-medium">
             Meses
           </label>
-          <div className="flex gap-2">
-            {MONTHS_OPTIONS.map((m) => (
+          {customMonths ? (
+            <div>
+              <input
+                id="months"
+                type="text"
+                inputMode="numeric"
+                placeholder="Ej. 36"
+                value={months === 0 ? "" : String(months)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "");
+                  const n = v === "" ? 0 : Math.min(parseInt(v, 10), 120);
+                  setMonths(n);
+                }}
+                className={inputClass}
+              />
               <button
-                key={m}
                 type="button"
-                onClick={() => setMonths(m)}
-                className={`flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors ${
-                  months === m
-                    ? "bg-accent text-white"
-                    : "bg-muted text-muted-foreground"
-                }`}
+                onClick={() => {
+                  setCustomMonths(false);
+                  setMonths(0);
+                }}
+                className="mt-1.5 text-sm text-accent"
               >
-                {m}
+                ← Volver
               </button>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              {MONTHS_OPTIONS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMonths(m)}
+                  className={`flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors ${
+                    months === m
+                      ? "bg-accent text-white"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setCustomMonths(true);
+                  setMonths(0);
+                }}
+                className="flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors bg-muted text-muted-foreground"
+              >
+                Otro...
+              </button>
+            </div>
+          )}
           {errors.months && (
             <p className="mt-1 text-sm text-red-500">{errors.months}</p>
           )}
