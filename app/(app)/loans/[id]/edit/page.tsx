@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useLoans } from "@/lib/hooks/useLoans";
@@ -34,6 +34,14 @@ function formatCurrency(n: number): string {
 }
 
 export default function EditLoanPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2C6CFF] border-t-transparent" /></main>}>
+      <EditLoanContent />
+    </Suspense>
+  );
+}
+
+function EditLoanContent() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();

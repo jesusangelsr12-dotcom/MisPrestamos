@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Cuotas",
-  description: "Rastreo de gastos en MSI y préstamos personales",
+  description: "Controla tus MSI y préstamos",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
   },
+  icons: {
+    apple: "/icon-192x192.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -20,7 +23,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#F7F7F5",
+  themeColor: "#2C6CFF",
 };
 
 export default function RootLayout({

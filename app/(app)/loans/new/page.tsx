@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useLoans } from "@/lib/hooks/useLoans";
@@ -30,6 +30,14 @@ function formatCurrency(n: number): string {
 }
 
 export default function NewLoanPage() {
+  return (
+    <Suspense fallback={<main className="flex min-h-screen items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2C6CFF] border-t-transparent" /></main>}>
+      <NewLoanContent />
+    </Suspense>
+  );
+}
+
+function NewLoanContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { createLoan } = useLoans();
