@@ -16,55 +16,38 @@ export default function ProjectionPage() {
   const [expandedIndex, setExpandedIndex] = useState<number>(0);
 
   return (
-    <main className="min-h-screen px-5 pb-20 pt-safe">
-      {/* Header */}
-      <div className="pb-4 pt-6">
-        <h1 className="text-2xl font-bold font-display">Proyección</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Próximos 12 meses</p>
-      </div>
+    <main className="min-h-screen px-5 pb-24 pt-safe">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+        <div className="pb-4 pt-6">
+          <h1 className="font-display text-[28px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Proyección</h1>
+          <p className="mt-1 text-[14px] text-[#6B6B6B]">Próximos 12 meses</p>
+        </div>
 
-      {/* Content */}
-      {loading ? (
-        <div className="flex h-40 items-center justify-center">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center gap-3 pt-20">
-          <p className="text-sm text-red-500">{error}</p>
-          <button
-            type="button"
-            onClick={() => refresh()}
-            className="rounded-xl bg-accent px-5 py-2.5 text-sm font-medium text-white"
-          >
-            Reintentar
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {projection.map((p, i) => (
-            <motion.div
-              key={p.month.toISOString()}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-            >
-              <MonthProjectionCard
-                month={p.month}
-                msiTotal={p.msiTotal}
-                loansGivenTotal={p.loansGivenTotal}
-                loansReceivedTotal={p.loansReceivedTotal}
-                total={p.total}
-                isCurrentMonth={isSameMonth(p.month, now)}
-                expanded={expandedIndex === i}
-                onToggle={() =>
-                  setExpandedIndex(expandedIndex === i ? -1 : i)
-                }
-              />
-            </motion.div>
-          ))}
-        </div>
-      )}
-
+        {loading ? (
+          <div className="flex h-40 items-center justify-center">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2C6CFF] border-t-transparent" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center gap-3 pt-20">
+            <p className="text-[14px] text-[#EF4444]">{error}</p>
+            <button type="button" onClick={() => refresh()} className="rounded-[10px] bg-[#2C6CFF] px-5 py-2.5 text-[14px] font-medium text-white">Reintentar</button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {projection.map((p, i) => (
+              <motion.div key={p.month.toISOString()} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.3) }}>
+                <MonthProjectionCard
+                  month={p.month} msiTotal={p.msiTotal} loansGivenTotal={p.loansGivenTotal}
+                  loansReceivedTotal={p.loansReceivedTotal} total={p.total}
+                  isCurrentMonth={isSameMonth(p.month, now)}
+                  expanded={expandedIndex === i}
+                  onToggle={() => setExpandedIndex(expandedIndex === i ? -1 : i)}
+                />
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.div>
       <BottomNav />
     </main>
   );

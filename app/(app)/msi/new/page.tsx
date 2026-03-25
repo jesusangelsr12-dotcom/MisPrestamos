@@ -105,25 +105,22 @@ export default function NewMSIPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-[#EBEBEB] bg-white px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
+    "h-12 w-full rounded-[10px] border border-[#EBEBEB] bg-white px-3.5 text-[15px] text-[#1A1A1A] placeholder:text-[#A8A8A8] focus:border-[#2C6CFF] focus:outline-none focus:ring-[3px] focus:ring-[#2C6CFF]/12";
 
   return (
     <main className="min-h-screen px-5 pb-safe pt-safe">
       <div className="pb-4 pt-6">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="mb-2 text-sm text-accent"
-        >
-          ← Volver
+        <button type="button" onClick={() => router.back()} className="mb-3 flex items-center gap-1 text-[14px] text-[#2C6CFF]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          Volver
         </button>
-        <h1 className="text-2xl font-bold font-display">Nuevo gasto MSI</h1>
+        <h1 className="font-display text-[24px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Nuevo gasto MSI</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {/* Card select */}
         <div>
-          <label htmlFor="card" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="card" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Tarjeta
           </label>
           {cardsLoading ? (
@@ -151,13 +148,13 @@ export default function NewMSIPage() {
             </select>
           )}
           {errors.card_id && (
-            <p className="mt-1 text-sm text-red-500">{errors.card_id}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.card_id}</p>
           )}
         </div>
 
         {/* Description */}
         <div>
-          <label htmlFor="description" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="description" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Descripción
           </label>
           <input
@@ -169,13 +166,13 @@ export default function NewMSIPage() {
             className={inputClass}
           />
           {errors.description && (
-            <p className="mt-1 text-sm text-red-500">{errors.description}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.description}</p>
           )}
         </div>
 
         {/* Total amount */}
         <div>
-          <label htmlFor="total" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="total" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Monto total
           </label>
           <input
@@ -190,13 +187,13 @@ export default function NewMSIPage() {
             className={`${inputClass} font-mono`}
           />
           {errors.total_amount && (
-            <p className="mt-1 text-sm text-red-500">{errors.total_amount}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.total_amount}</p>
           )}
         </div>
 
         {/* Months */}
         <div>
-          <label htmlFor="months" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="months" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Meses
           </label>
           {customMonths ? (
@@ -220,7 +217,7 @@ export default function NewMSIPage() {
                   setCustomMonths(false);
                   setMonths(0);
                 }}
-                className="mt-1.5 text-sm text-accent"
+                className="mt-1.5 text-[13px] text-[#2C6CFF]"
               >
                 ← Volver
               </button>
@@ -234,8 +231,8 @@ export default function NewMSIPage() {
                   onClick={() => setMonths(m)}
                   className={`flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors ${
                     months === m
-                      ? "bg-accent text-white"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-[#2C6CFF] text-white"
+                      : "bg-white border border-[#EBEBEB] text-[#6B6B6B]"
                   }`}
                 >
                   {m}
@@ -247,25 +244,25 @@ export default function NewMSIPage() {
                   setCustomMonths(true);
                   setMonths(0);
                 }}
-                className="flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors bg-muted text-muted-foreground"
+                className="flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors bg-white border border-[#EBEBEB] text-[#6B6B6B]"
               >
                 Otro...
               </button>
             </div>
           )}
           {errors.months && (
-            <p className="mt-1 text-sm text-red-500">{errors.months}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.months}</p>
           )}
         </div>
 
         {/* Monthly preview */}
         {monthlyPreview > 0 && (
-          <div className="rounded-xl bg-accent/5 px-4 py-3 text-center">
-            <p className="text-sm text-muted-foreground">Pagarás</p>
-            <p className="font-mono text-xl font-medium text-accent">
+          <div className="rounded-xl bg-[#EEF3FF] px-3.5 py-3.5 text-center">
+            <p className="text-[13px] text-[#6B6B6B]">Pagarás</p>
+            <p className="font-mono text-[20px] font-medium text-[#2C6CFF]">
               {formatCurrency(monthlyPreview)}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-[13px] text-[#6B6B6B]">
               por mes durante {months} meses
             </p>
           </div>
@@ -273,7 +270,7 @@ export default function NewMSIPage() {
 
         {/* Start date */}
         <div>
-          <label htmlFor="startDate" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="startDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Fecha de inicio
           </label>
           <input
@@ -284,13 +281,13 @@ export default function NewMSIPage() {
             className={inputClass}
           />
           {errors.start_date && (
-            <p className="mt-1 text-sm text-red-500">{errors.start_date}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.start_date}</p>
           )}
         </div>
 
         {/* Owner toggle */}
         <div>
-          <span className="mb-1.5 block text-sm font-medium">¿De quién es?</span>
+          <span className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">¿De quién es?</span>
           <div className="flex gap-2">
             <button
               type="button"
@@ -320,7 +317,7 @@ export default function NewMSIPage() {
         {/* Owner name */}
         {owner === "other" && (
           <div>
-            <label htmlFor="ownerName" className="mb-1.5 block text-sm font-medium">
+            <label htmlFor="ownerName" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
               Nombre
             </label>
             <input
@@ -332,20 +329,20 @@ export default function NewMSIPage() {
               className={inputClass}
             />
             {errors.owner_name && (
-              <p className="mt-1 text-sm text-red-500">{errors.owner_name}</p>
+              <p className="mt-1 text-[13px] text-[#EF4444]">{errors.owner_name}</p>
             )}
           </div>
         )}
 
         {errors.form && (
-          <p className="text-sm text-red-500">{errors.form}</p>
+          <p className="text-[14px] text-[#EF4444]">{errors.form}</p>
         )}
 
         {/* Submit */}
         <button
           type="submit"
           disabled={submitting || cards.length === 0}
-          className="mt-2 w-full rounded-xl bg-accent py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-50"
+          className="mt-2 flex h-[52px] w-full items-center justify-center rounded-xl bg-[#2C6CFF] font-display text-[16px] font-semibold text-white disabled:opacity-50"
         >
           {submitting ? "Guardando..." : "Agregar gasto MSI"}
         </button>

@@ -11,6 +11,16 @@ interface PinKeypadProps {
 }
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
+const subLetters: Record<string, string> = {
+  "2": "ABC",
+  "3": "DEF",
+  "4": "GHI",
+  "5": "JKL",
+  "6": "MNO",
+  "7": "PQRS",
+  "8": "TUV",
+  "9": "WXYZ",
+};
 
 export function PinKeypad({
   onComplete,
@@ -38,7 +48,6 @@ export function PinKeypad({
 
       if (newPin.length === length) {
         onComplete(newPin);
-        // Reset after a short delay to allow animation
         setTimeout(() => setPin(""), 300);
       }
     },
@@ -46,19 +55,19 @@ export function PinKeypad({
   );
 
   return (
-    <div className="flex flex-col items-center gap-8">
+    <div className="flex flex-col items-center gap-10">
       {/* PIN Dots */}
       <motion.div
-        className="flex gap-3"
+        className="flex gap-4"
         animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : {}}
         transition={{ duration: 0.4 }}
       >
         {Array.from({ length }).map((_, i) => (
           <div
             key={i}
-            className={`w-3.5 h-3.5 rounded-full transition-colors duration-150 ${
+            className={`h-3.5 w-3.5 rounded-full transition-colors duration-150 ${
               i < pin.length
-                ? "bg-accent"
+                ? "bg-[#2C6CFF]"
                 : "border-2 border-[#EBEBEB] bg-transparent"
             }`}
           />
@@ -69,7 +78,7 @@ export function PinKeypad({
       <div className="grid grid-cols-3 gap-4">
         {keys.map((key, i) => {
           if (key === "") {
-            return <div key={i} className="w-16 h-16" />;
+            return <div key={i} className="h-[68px] w-[68px]" />;
           }
 
           return (
@@ -79,15 +88,18 @@ export function PinKeypad({
               disabled={disabled}
               whileTap={{ scale: 0.9 }}
               onClick={() => handleKey(key)}
-              className={`w-16 h-16 rounded-full flex items-center justify-center text-[22px] font-display transition-colors select-none ${
-                disabled
-                  ? "opacity-40 cursor-not-allowed"
-                  : "active:bg-muted"
+              className={`flex h-[68px] w-[68px] flex-col items-center justify-center rounded-full font-display select-none transition-colors ${
+                disabled ? "opacity-40 cursor-not-allowed" : "active:bg-muted"
               } ${
                 key === "del"
-                  ? "text-muted-foreground text-base"
-                  : "bg-white text-foreground shadow-sm"
+                  ? "text-[#A8A8A8]"
+                  : "bg-white text-[#1A1A1A]"
               }`}
+              style={
+                key !== "del"
+                  ? { boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }
+                  : undefined
+              }
             >
               {key === "del" ? (
                 <svg
@@ -105,7 +117,19 @@ export function PinKeypad({
                   <line x1="12" y1="9" x2="18" y2="15" />
                 </svg>
               ) : (
-                key
+                <>
+                  <span className="text-[24px] font-display leading-none">
+                    {key}
+                  </span>
+                  {subLetters[key] && (
+                    <span
+                      className="mt-0.5 text-[8px] text-[#A8A8A8]"
+                      style={{ letterSpacing: "0.1em" }}
+                    >
+                      {subLetters[key]}
+                    </span>
+                  )}
+                </>
               )}
             </motion.button>
           );

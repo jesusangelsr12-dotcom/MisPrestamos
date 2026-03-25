@@ -157,12 +157,12 @@ export default function EditLoanPage() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-[#EBEBEB] bg-white px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
+    "h-12 w-full rounded-[10px] border border-[#EBEBEB] bg-white px-3.5 text-[15px] text-[#1A1A1A] placeholder:text-[#A8A8A8] focus:border-[#2C6CFF] focus:outline-none focus:ring-[3px] focus:ring-[#2C6CFF]/12";
 
   if (loadingLoan) {
     return (
       <main className="flex min-h-screen items-center justify-center pb-safe pt-safe">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2C6CFF] border-t-transparent" />
       </main>
     );
   }
@@ -170,23 +170,18 @@ export default function EditLoanPage() {
   return (
     <main className="min-h-screen px-5 pb-safe pt-safe">
       <div className="pb-4 pt-6">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="mb-2 text-sm text-accent"
-        >
-          ← Volver
+        <button type="button" onClick={() => router.back()} className="mb-3 flex items-center gap-1 text-[14px] text-[#2C6CFF]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          Volver
         </button>
-        <h1 className="text-2xl font-bold font-display">Editar préstamo</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {direction === "given" ? "Presté 💸" : "Me prestaron 📥"}
-        </p>
+        <h1 className="font-display text-[24px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Editar préstamo</h1>
+        <p className="mt-1 text-[13px] text-[#6B6B6B]">{direction === "given" ? "Presté 💸" : "Me prestaron 📥"}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {/* Name */}
         <div>
-          <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="name" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             {direction === "given"
               ? "¿A quién le prestaste?"
               : "¿Quién te prestó?"}
@@ -200,13 +195,13 @@ export default function EditLoanPage() {
             className={inputClass}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.name}</p>
           )}
         </div>
 
         {/* Amount */}
         <div>
-          <label htmlFor="amount" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="amount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Monto total
           </label>
           <input
@@ -221,13 +216,13 @@ export default function EditLoanPage() {
             className={`${inputClass} font-mono`}
           />
           {errors.amount && (
-            <p className="mt-1 text-sm text-red-500">{errors.amount}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.amount}</p>
           )}
         </div>
 
         {/* Months */}
         <div>
-          <label htmlFor="months" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="months" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Número de meses
           </label>
           {customMonths ? (
@@ -251,7 +246,7 @@ export default function EditLoanPage() {
                   setCustomMonths(false);
                   setTotalMonths(0);
                 }}
-                className="mt-1.5 text-sm text-accent"
+                className="mt-1.5 text-[13px] text-[#2C6CFF]"
               >
                 ← Volver
               </button>
@@ -265,8 +260,8 @@ export default function EditLoanPage() {
                   onClick={() => setTotalMonths(m)}
                   className={`flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors ${
                     totalMonths === m
-                      ? "bg-accent text-white"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-[#2C6CFF] text-white"
+                      : "bg-white border border-[#EBEBEB] text-[#6B6B6B]"
                   }`}
                 >
                   {m}
@@ -278,29 +273,23 @@ export default function EditLoanPage() {
                   setCustomMonths(true);
                   setTotalMonths(0);
                 }}
-                className="flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors bg-muted text-muted-foreground"
+                className="flex h-11 flex-1 items-center justify-center rounded-xl text-[15px] font-medium transition-colors bg-white border border-[#EBEBEB] text-[#6B6B6B]"
               >
                 Otro...
               </button>
             </div>
           )}
           {errors.total_months && (
-            <p className="mt-1 text-sm text-red-500">{errors.total_months}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.total_months}</p>
           )}
         </div>
 
         {/* Summary preview */}
         {monthlyPreview > 0 && (
-          <div className="rounded-xl bg-accent/5 px-4 py-3 text-center">
-            <p className="text-sm text-muted-foreground">
-              {direction === "given" ? "Recibirás" : "Pagarás"}
-            </p>
-            <p className="font-mono text-xl font-medium text-accent">
-              {formatCurrency(monthlyPreview)}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              por mes durante {totalMonths} meses
-            </p>
+          <div className="rounded-xl bg-[#EEF3FF] px-3.5 py-3.5 text-center">
+            <p className="text-[13px] text-[#6B6B6B]">{direction === "given" ? "Recibirás" : "Pagarás"}</p>
+            <p className="font-mono text-[20px] font-medium text-[#2C6CFF]">{formatCurrency(monthlyPreview)}</p>
+            <p className="text-[13px] text-[#6B6B6B]">por mes durante {totalMonths} meses</p>
           </div>
         )}
 
@@ -308,7 +297,7 @@ export default function EditLoanPage() {
         <div>
           <label
             htmlFor="startDate"
-            className="mb-1.5 block text-sm font-medium"
+            className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]"
           >
             Fecha de inicio
           </label>
@@ -320,13 +309,13 @@ export default function EditLoanPage() {
             className={inputClass}
           />
           {errors.start_date && (
-            <p className="mt-1 text-sm text-red-500">{errors.start_date}</p>
+            <p className="mt-1 text-[13px] text-[#EF4444]">{errors.start_date}</p>
           )}
         </div>
 
         {/* Notes */}
         <div>
-          <label htmlFor="notes" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="notes" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
             Notas (opcional)
           </label>
           <textarea
@@ -340,14 +329,14 @@ export default function EditLoanPage() {
         </div>
 
         {errors.form && (
-          <p className="text-sm text-red-500">{errors.form}</p>
+          <p className="text-[14px] text-[#EF4444]">{errors.form}</p>
         )}
 
         {/* Submit */}
         <button
           type="submit"
           disabled={submitting}
-          className="mt-2 w-full rounded-xl bg-accent py-3.5 text-[15px] font-semibold text-white transition-opacity disabled:opacity-50"
+          className="mt-2 flex h-[52px] w-full items-center justify-center rounded-xl bg-[#2C6CFF] font-display text-[16px] font-semibold text-white disabled:opacity-50"
         >
           {submitting ? "Guardando..." : "Guardar cambios"}
         </button>

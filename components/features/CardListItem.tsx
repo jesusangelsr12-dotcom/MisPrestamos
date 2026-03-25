@@ -10,19 +10,14 @@ interface CardListItemProps {
   onTap: () => void;
 }
 
-export function CardListItem({
-  name,
-  bank,
-  lastFour,
-  color,
-  onTap,
-}: CardListItemProps) {
+export function CardListItem({ name, bank, lastFour, color, onTap }: CardListItemProps) {
   return (
     <motion.button
       type="button"
       onClick={onTap}
-      className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3.5 text-left"
-      whileTap={{ scale: 0.98 }}
+      className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-4 text-left"
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+      whileTap={{ scale: 0.97 }}
     >
       <div className="flex items-center gap-3">
         <span
@@ -30,11 +25,11 @@ export function CardListItem({
           style={{ backgroundColor: color }}
         />
         <div>
-          <p className="text-[15px] font-medium text-foreground">{name}</p>
-          <p className="text-sm text-muted-foreground">{bank}</p>
+          <p className="text-[15px] font-medium text-[#1A1A1A]">{name}</p>
+          <p className="text-[12px] text-[#A8A8A8]">{bank}</p>
         </div>
       </div>
-      <span className="font-mono text-sm text-muted-foreground">
+      <span className="font-mono text-[14px] text-[#6B6B6B]">
         •••• {lastFour}
       </span>
     </motion.button>
