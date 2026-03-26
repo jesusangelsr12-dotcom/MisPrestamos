@@ -106,16 +106,17 @@ export async function markMSIMonthPaid(
 
   const { data: current, error: fetchError } = await supabase
     .from("msi_expenses")
-    .select("months_paid, months, description")
+    .select("months_paid, months, description, has_final_payment")
     .eq("id", id)
     .single();
 
   if (fetchError || !current) throw new Error("Gasto MSI no encontrado");
-  if (current.months_paid >= current.months) {
+  const totalMonths = current.has_final_payment ? current.months + 1 : current.months;
+  if (current.months_paid >= totalMonths) {
     throw new Error("Este gasto ya está completado");
   }
 
-  const newMonthsPaid = Math.min(current.months_paid + monthsCovered, current.months);
+  const newMonthsPaid = Math.min(current.months_paid + monthsCovered, totalMonths);
 
   const { data, error } = await supabase
     .from("msi_expenses")

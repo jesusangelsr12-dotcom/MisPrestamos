@@ -68,11 +68,19 @@ export function useDashboard(): DashboardData {
     load();
   }, [load]);
 
-  const activeMSI = msiExpenses.filter((e) => e.months_paid < e.months);
+  const activeMSI = msiExpenses.filter((e) => {
+    const total = e.has_final_payment ? e.months + 1 : e.months;
+    return e.months_paid < total;
+  });
   const activeLoansGiven = loansGiven.filter((l) => l.months_paid < l.total_months);
   const activeLoansReceived = loansReceived.filter((l) => l.months_paid < l.total_months);
 
-  const msiTotal = activeMSI.reduce((sum, e) => sum + e.monthly_amount, 0);
+  const msiTotal = activeMSI.reduce((sum, e) => {
+    if (e.has_final_payment && e.months_paid === e.months && e.final_payment_amount) {
+      return sum + e.final_payment_amount;
+    }
+    return sum + e.monthly_amount;
+  }, 0);
   const loansGivenTotal = activeLoansGiven.reduce((sum, l) => sum + l.monthly_payment, 0);
   const loansReceivedTotal = activeLoansReceived.reduce((sum, l) => sum + l.monthly_payment, 0);
 

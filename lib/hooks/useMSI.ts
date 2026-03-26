@@ -82,9 +82,11 @@ export function useMSI(): UseMSIReturn {
     async (id: string, amount: number, monthsCovered: number) => {
       // Optimistic update
       setExpenses((prev) =>
-        prev.map((e) =>
-          e.id === id ? { ...e, months_paid: Math.min(e.months_paid + monthsCovered, e.months) } : e
-        )
+        prev.map((e) => {
+          if (e.id !== id) return e;
+          const total = e.has_final_payment ? e.months + 1 : e.months;
+          return { ...e, months_paid: Math.min(e.months_paid + monthsCovered, total) };
+        })
       );
 
       try {

@@ -34,13 +34,28 @@ export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSI
   const [historyOpen, setHistoryOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
   const { card } = expense;
-  const pct = expense.months > 0 ? (expense.months_paid / expense.months) * 100 : 0;
-  const isComplete = expense.months_paid >= expense.months;
-  const remainingMonths = expense.months - expense.months_paid;
-  const estimatedRemaining = expense.monthly_amount * remainingMonths;
-  const paidDisplay = paidReal !== undefined ? paidReal : expense.monthly_amount * expense.months_paid;
+
+  const totalMonths = expense.has_final_payment ? expense.months + 1 : expense.months;
+  const pct = totalMonths > 0 ? (expense.months_paid / totalMonths) * 100 : 0;
+  const isComplete = expense.months_paid >= totalMonths;
+  const remainingMonths = totalMonths - expense.months_paid;
+
+  // Est. restante: regular months remaining * monthly_amount + final if unpaid
+  let estimatedRemaining = 0;
+  if (expense.months_paid < expense.months) {
+    estimatedRemaining = expense.monthly_amount * (expense.months - expense.months_paid);
+    if (expense.has_final_payment && expense.final_payment_amount) {
+      estimatedRemaining += expense.final_payment_amount;
+    }
+  } else if (expense.months_paid === expense.months && expense.has_final_payment && expense.final_payment_amount) {
+    estimatedRemaining = expense.final_payment_amount;
+  }
+
+  const paidDisplay = paidReal !== undefined ? paidReal : expense.monthly_amount * Math.min(expense.months_paid, expense.months);
   const progressColor = getProgressColor(pct);
-  const isFinalMonth = expense.months_paid === expense.months - 1;
+
+  // Final month = the balloon month (month months+1), i.e. months_paid === months
+  const isFinalMonth = expense.has_final_payment && expense.months_paid === expense.months;
 
   return (
     <>
@@ -81,7 +96,7 @@ export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSI
           </div>
           <div>
             <span className="text-[11px] text-[#A8A8A8]">Meses </span>
-            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{expense.months_paid}/{expense.months}</span>
+            <span className="font-mono text-[13px] font-medium text-[#1A1A1A]">{expense.months_paid}/{totalMonths}</span>
           </div>
         </div>
 
@@ -118,7 +133,7 @@ export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSI
         monthlyAmount={expense.monthly_amount}
         remainingMonths={remainingMonths}
         currentMonth={expense.months_paid + 1}
-        totalMonths={expense.months}
+        totalMonths={totalMonths}
         isFinalMonth={isFinalMonth}
         finalPaymentAmount={expense.has_final_payment ? expense.final_payment_amount : null}
       />

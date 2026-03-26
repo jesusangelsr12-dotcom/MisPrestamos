@@ -276,6 +276,9 @@ export default function NewMSIPage() {
             </p>
             <p className="text-[13px] text-[#6B6B6B]">
               por mes durante {months} meses
+              {hasFinalPayment && finalPaymentAmount && parseFloat(finalPaymentAmount) > 0 && (
+                <> + {formatCurrency(parseFloat(finalPaymentAmount))} en el mes {months + 1}</>
+              )}
             </p>
           </div>
         )}
@@ -370,8 +373,8 @@ export default function NewMSIPage() {
                 onChange={(e) => setFinalPaymentAmount(e.target.value.replace(/[^0-9.]/g, ""))}
                 className={`${inputClass} font-mono`}
               />
-              {monthlyPreview > 0 && months > 0 && (
-                <p className="mt-1 text-[12px] text-[#A8A8A8]">El mes {months} tendrá este monto en lugar de {formatCurrency(monthlyPreview)}</p>
+              {months > 0 && (
+                <p className="mt-1 text-[12px] text-[#A8A8A8]">Se agregará un mes {months + 1} con este monto adicional</p>
               )}
               {errors.final_payment_amount && (
                 <p className="mt-1 text-[13px] text-[#EF4444]">{errors.final_payment_amount}</p>

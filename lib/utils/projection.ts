@@ -16,6 +16,10 @@ function addMonths(date: Date, n: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + n, 1);
 }
 
+function getTotalMonths(expense: MSIExpense): number {
+  return expense.has_final_payment ? expense.months + 1 : expense.months;
+}
+
 export function calculateMonthlyProjection(
   msiExpenses: MSIExpense[],
   loansGiven: LoanGiven[],
@@ -31,23 +35,23 @@ export function calculateMonthlyProjection(
 
     let msiTotal = 0;
     for (const expense of msiExpenses) {
-      if (expense.months_paid >= expense.months) continue;
+      const total = getTotalMonths(expense);
+      if (expense.months_paid >= total) continue;
 
       const startMonth = getMonthStart(new Date(expense.start_date));
       const firstUnpaidMonth = addMonths(startMonth, expense.months_paid);
-      const lastPaymentMonth = addMonths(startMonth, expense.months - 1);
+      const lastPaymentMonth = addMonths(startMonth, total - 1);
 
       if (targetMonth >= firstUnpaidMonth && targetMonth <= lastPaymentMonth) {
-        // Determine which month number this is (1-indexed)
         const monthNumber =
           (targetMonth.getFullYear() - startMonth.getFullYear()) * 12 +
           (targetMonth.getMonth() - startMonth.getMonth()) + 1;
 
-        // Use final_payment_amount for the last month if has_final_payment
+        // Month (months + 1) is the balloon payment
         if (
-          monthNumber === expense.months &&
           expense.has_final_payment &&
-          expense.final_payment_amount
+          expense.final_payment_amount &&
+          monthNumber === expense.months + 1
         ) {
           msiTotal += expense.final_payment_amount;
         } else {
