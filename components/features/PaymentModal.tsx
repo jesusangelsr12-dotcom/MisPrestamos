@@ -75,13 +75,20 @@ export function PaymentModal({
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[4px]"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-x-5 top-1/2 z-50 -translate-y-1/2 rounded-2xl bg-white p-5"
-            style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col bg-white"
+            style={{ borderRadius: "24px 24px 0 0" }}
           >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="h-1 w-8 rounded-full bg-[#E8E8E5]" />
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-5">
             {/* Title */}
             <p className="text-[16px] font-semibold text-[#1A1A1A]">
               Registrar pago — Mes {currentMonth} de {totalMonths}
@@ -151,8 +158,12 @@ export function PaymentModal({
               </p>
             </div>
 
-            {/* Buttons */}
-            <div className="mt-4 flex gap-3">
+            {/* Bottom spacer for sticky buttons */}
+            <div className="h-4" />
+            </div>
+
+            {/* Sticky buttons */}
+            <div className="sticky bottom-0 flex gap-3 bg-white px-5 pt-4 pb-5" style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
               <button
                 type="button"
                 onClick={onClose}
