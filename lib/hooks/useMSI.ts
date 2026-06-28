@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { MSIExpenseWithCard } from "@/types";
+import type { MSIExpenseWithCard, MSIInput } from "@/types";
 import {
   fetchMSIExpenses,
   insertMSI,
   updateMSIById,
   deleteMSIById,
   markMSIMonthPaid,
-  type MSIInput,
 } from "@/lib/supabase/msi";
 
 interface UseMSIReturn {

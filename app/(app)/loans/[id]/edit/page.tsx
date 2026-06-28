@@ -4,11 +4,9 @@ import { Suspense, useState, useEffect, useMemo } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useLoans } from "@/lib/hooks/useLoans";
-import {
-  fetchLoanGivenById,
-  fetchLoanReceivedById,
-  type LoanType,
-} from "@/lib/supabase/loans";
+import { fetchLoanGivenById, fetchLoanReceivedById } from "@/lib/supabase/loans";
+import { sanitizeDecimalInput } from "@/lib/utils";
+import type { LoanType } from "@/types";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
 
@@ -47,8 +45,10 @@ function EditLoanContent() {
   const searchParams = useSearchParams();
   const { updateLoan } = useLoans();
 
-  const direction = (searchParams.get("type") as LoanType) || "given";
+  const rawType = searchParams.get("type");
+  const direction: LoanType = rawType === "received" ? "received" : "given";
   const [loadingLoan, setLoadingLoan] = useState(true);
+  const [monthsPaid, setMonthsPaid] = useState(0);
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -78,6 +78,7 @@ function EditLoanContent() {
 
       setName(personName);
       setAmount(String(data.amount));
+      setMonthsPaid(data.months_paid);
       setTotalMonths(data.total_months);
       if (!MONTHS_OPTIONS.includes(data.total_months)) {
         setCustomMonths(true);
@@ -122,6 +123,13 @@ function EditLoanContent() {
         }
       }
       setErrors(fieldErrors);
+      return;
+    }
+
+    if (parsed.data.total_months < monthsPaid) {
+      setErrors({
+        total_months: `Ya registraste ${monthsPaid} meses pagados; no puede ser menor.`,
+      });
       return;
     }
 
@@ -218,9 +226,7 @@ function EditLoanContent() {
             inputMode="decimal"
             placeholder="$0"
             value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value.replace(/[^0-9.]/g, ""))
-            }
+            onChange={(e) => setAmount(sanitizeDecimalInput(e.target.value))}
             className={`${inputClass} font-mono`}
           />
           {errors.amount && (

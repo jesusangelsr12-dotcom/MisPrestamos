@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import type { CardInput } from "@/lib/supabase/cards";
+import type { CardInput } from "@/types";
 
 const PRESET_COLORS = ["#2C6CFF", "#00A878", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#0EA5E9", "#1A1A1A"];
 

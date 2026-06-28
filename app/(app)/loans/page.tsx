@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LoanCard } from "@/components/features/LoanCard";
 import { BottomNav } from "@/components/features/BottomNav";
 import { useLoans } from "@/lib/hooks/useLoans";
-import type { LoanType } from "@/lib/supabase/loans";
+import type { LoanType } from "@/types";
 
 type Tab = "given" | "received";
 

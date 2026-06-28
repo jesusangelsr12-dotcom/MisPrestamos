@@ -1,10 +1,12 @@
-import { createClient } from "@/lib/supabase/client";
-import type { Card } from "@/types";
+"use server";
 
-export type CardInput = Omit<Card, "id" | "created_at">;
+import { createAdminClient } from "@/lib/supabase/admin";
+import { requireSession } from "@/lib/auth-guard";
+import type { Card, CardInput } from "@/types";
 
 export async function fetchCards(): Promise<Card[]> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("cards")
     .select("*")
@@ -15,7 +17,8 @@ export async function fetchCards(): Promise<Card[]> {
 }
 
 export async function fetchCardById(id: string): Promise<Card | null> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("cards")
     .select("*")
@@ -27,7 +30,8 @@ export async function fetchCardById(id: string): Promise<Card | null> {
 }
 
 export async function insertCard(card: CardInput): Promise<Card> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("cards")
     .insert(card)
@@ -42,7 +46,8 @@ export async function updateCardById(
   id: string,
   card: Partial<CardInput>
 ): Promise<Card> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("cards")
     .update(card)
@@ -55,7 +60,8 @@ export async function updateCardById(
 }
 
 export async function deleteCardById(id: string): Promise<void> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
 
   // Check for linked MSI expenses
   const { count } = await supabase

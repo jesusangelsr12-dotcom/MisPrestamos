@@ -4,7 +4,8 @@ import { Suspense, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { useLoans } from "@/lib/hooks/useLoans";
-import type { LoanType } from "@/lib/supabase/loans";
+import { sanitizeDecimalInput } from "@/lib/utils";
+import type { LoanType } from "@/types";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
 
@@ -42,7 +43,8 @@ function NewLoanContent() {
   const searchParams = useSearchParams();
   const { createLoan } = useLoans();
 
-  const initialType = (searchParams.get("type") as LoanType) || "given";
+  const rawType = searchParams.get("type");
+  const initialType: LoanType = rawType === "received" ? "received" : "given";
   const [direction, setDirection] = useState<LoanType>(initialType);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -197,9 +199,7 @@ function NewLoanContent() {
             inputMode="decimal"
             placeholder="$0"
             value={amount}
-            onChange={(e) =>
-              setAmount(e.target.value.replace(/[^0-9.]/g, ""))
-            }
+            onChange={(e) => setAmount(sanitizeDecimalInput(e.target.value))}
             className={`${inputClass} font-mono`}
           />
           {errors.amount && (

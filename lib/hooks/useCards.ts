@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { Card } from "@/types";
+import type { Card, CardInput } from "@/types";
 import {
   fetchCards,
   insertCard,
   updateCardById,
   deleteCardById,
-  type CardInput,
 } from "@/lib/supabase/cards";
 
 interface UseCardsReturn {

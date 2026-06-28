@@ -6,8 +6,7 @@ import { motion } from "framer-motion";
 import { CardForm } from "@/components/features/CardForm";
 import { useCards } from "@/lib/hooks/useCards";
 import { fetchCardById } from "@/lib/supabase/cards";
-import type { CardInput } from "@/lib/supabase/cards";
-import type { Card } from "@/types";
+import type { Card, CardInput } from "@/types";
 
 export default function EditCardPage() {
   const router = useRouter();

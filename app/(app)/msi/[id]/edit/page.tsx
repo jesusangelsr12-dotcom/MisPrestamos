@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import { z } from "zod";
 import { fetchMSIById } from "@/lib/supabase/msi";
 import { useMSI } from "@/lib/hooks/useMSI";
+import { sanitizeDecimalInput } from "@/lib/utils";
 import type { MSIExpenseWithCard, ExpenseOwner } from "@/types";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
@@ -126,6 +127,13 @@ export default function EditMSIPage() {
       return;
     }
 
+    if (expense && parsed.data.months < expense.months_paid) {
+      setErrors({
+        months: `Ya registraste ${expense.months_paid} meses pagados; no puede ser menor.`,
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       await updateExpense(params.id, parsed.data);
@@ -192,9 +200,7 @@ export default function EditMSIPage() {
             inputMode="decimal"
             placeholder="$0"
             value={totalAmount}
-            onChange={(e) =>
-              setTotalAmount(e.target.value.replace(/[^0-9.]/g, ""))
-            }
+            onChange={(e) => setTotalAmount(sanitizeDecimalInput(e.target.value))}
             className={`${inputClass} font-mono`}
           />
           {errors.total_amount && (
@@ -367,7 +373,7 @@ export default function EditMSIPage() {
                 inputMode="decimal"
                 placeholder="Ej. 5,000"
                 value={finalPaymentAmount}
-                onChange={(e) => setFinalPaymentAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                onChange={(e) => setFinalPaymentAmount(sanitizeDecimalInput(e.target.value))}
                 className={`${inputClass} font-mono`}
               />
               {months > 0 && (

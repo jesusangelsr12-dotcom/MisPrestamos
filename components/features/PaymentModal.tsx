@@ -2,6 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { sanitizeDecimalInput } from "@/lib/utils";
+
+// Render a numeric amount for an editable money input without long binary
+// float tails (e.g. 3333.3333333333335 → "3333.33").
+function toAmountInput(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -39,13 +46,13 @@ export function PaymentModal({
   finalPaymentAmount,
 }: PaymentModalProps) {
   const defaultAmount = isFinalMonth && finalPaymentAmount ? finalPaymentAmount : monthlyAmount;
-  const [amountStr, setAmountStr] = useState(String(defaultAmount));
+  const [amountStr, setAmountStr] = useState(toAmountInput(defaultAmount));
   const [selectedCover, setSelectedCover] = useState<number>(1);
 
   useEffect(() => {
     if (isOpen) {
       const def = isFinalMonth && finalPaymentAmount ? finalPaymentAmount : monthlyAmount;
-      setAmountStr(String(def));
+      setAmountStr(toAmountInput(def));
       setSelectedCover(1);
     }
   }, [isOpen, isFinalMonth, finalPaymentAmount, monthlyAmount]);
@@ -103,7 +110,7 @@ export function PaymentModal({
                 type="text"
                 inputMode="decimal"
                 value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value.replace(/[^0-9.]/g, ""))}
+                onChange={(e) => setAmountStr(sanitizeDecimalInput(e.target.value))}
                 className={inputCls}
                 placeholder="$0"
               />

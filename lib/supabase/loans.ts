@@ -1,28 +1,18 @@
-import { createClient } from "@/lib/supabase/client";
-import type { LoanGiven, LoanReceived } from "@/types";
+"use server";
 
-export type LoanType = "given" | "received";
-
-export interface LoanGivenInput {
-  borrower_name: string;
-  amount: number;
-  monthly_payment: number;
-  total_months: number;
-  start_date: string;
-  notes: string | null;
-}
-
-export interface LoanReceivedInput {
-  lender_name: string;
-  amount: number;
-  monthly_payment: number;
-  total_months: number;
-  start_date: string;
-  notes: string | null;
-}
+import { createAdminClient } from "@/lib/supabase/admin";
+import { requireSession } from "@/lib/auth-guard";
+import type {
+  LoanGiven,
+  LoanReceived,
+  LoanType,
+  LoanGivenInput,
+  LoanReceivedInput,
+} from "@/types";
 
 export async function fetchLoansGiven(): Promise<LoanGiven[]> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .select("*")
@@ -33,7 +23,8 @@ export async function fetchLoansGiven(): Promise<LoanGiven[]> {
 }
 
 export async function fetchLoansReceived(): Promise<LoanReceived[]> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .select("*")
@@ -44,7 +35,8 @@ export async function fetchLoansReceived(): Promise<LoanReceived[]> {
 }
 
 export async function fetchLoanGivenById(id: string): Promise<LoanGiven | null> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .select("*")
@@ -56,7 +48,8 @@ export async function fetchLoanGivenById(id: string): Promise<LoanGiven | null> 
 }
 
 export async function fetchLoanReceivedById(id: string): Promise<LoanReceived | null> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .select("*")
@@ -68,7 +61,8 @@ export async function fetchLoanReceivedById(id: string): Promise<LoanReceived | 
 }
 
 export async function insertLoanGiven(input: LoanGivenInput): Promise<LoanGiven> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .insert(input)
@@ -80,7 +74,8 @@ export async function insertLoanGiven(input: LoanGivenInput): Promise<LoanGiven>
 }
 
 export async function insertLoanReceived(input: LoanReceivedInput): Promise<LoanReceived> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .insert(input)
@@ -95,7 +90,8 @@ export async function updateLoanGivenById(
   id: string,
   input: Partial<LoanGivenInput>
 ): Promise<LoanGiven> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .update(input)
@@ -111,7 +107,8 @@ export async function updateLoanReceivedById(
   id: string,
   input: Partial<LoanReceivedInput>
 ): Promise<LoanReceived> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .update(input)
@@ -124,59 +121,33 @@ export async function updateLoanReceivedById(
 }
 
 export async function deleteLoanById(id: string, type: LoanType): Promise<void> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const table = type === "given" ? "loans_given" : "loans_received";
   const { error } = await supabase.from(table).delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 
+// Atomic mark-paid: a single Postgres function increments months_paid and
+// writes one payment_history row per covered month in one transaction. This
+// replaces the previous read-modify-write that lost updates under concurrency
+// and silently swallowed history-insert errors.
 export async function markLoanMonthPaid(
   id: string,
   type: LoanType,
   amount: number,
   monthsCovered: number = 1
 ): Promise<LoanGiven | LoanReceived> {
-  const supabase = createClient();
-  const table = type === "given" ? "loans_given" : "loans_received";
-  const { data: current, error: fetchError } = await supabase
-    .from(table)
-    .select("*")
-    .eq("id", id)
-    .single();
+  await requireSession();
+  const supabase = createAdminClient();
+  const fn = type === "given" ? "mark_loan_given_paid" : "mark_loan_received_paid";
 
-  if (fetchError || !current) throw new Error("Préstamo no encontrado");
-  if (current.months_paid >= current.total_months) {
-    throw new Error("Este préstamo ya está completado");
-  }
-
-  const newMonthsPaid = Math.min(current.months_paid + monthsCovered, current.total_months);
-
-  const { data, error } = await supabase
-    .from(table)
-    .update({ months_paid: newMonthsPaid })
-    .eq("id", id)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc(fn, {
+    p_id: id,
+    p_months_covered: monthsCovered,
+    p_amount: amount,
+  });
 
   if (error) throw new Error(error.message);
-
-  // Record payment history
-  const entityType = type === "given" ? "loan_given" : "loan_received";
-  const entityName = type === "given"
-    ? (current as { borrower_name: string }).borrower_name
-    : (current as { lender_name: string }).lender_name;
-  try {
-    await supabase.from("payment_history").insert({
-      entity_type: entityType,
-      entity_id: id,
-      entity_name: entityName,
-      month_number: current.months_paid + 1,
-      amount,
-      months_covered: monthsCovered,
-    });
-  } catch (err) {
-    console.error("[markLoanMonthPaid] Failed to insert history:", err);
-  }
-
   return data as LoanGiven | LoanReceived;
 }

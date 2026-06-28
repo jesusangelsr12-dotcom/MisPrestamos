@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  SESSION_COOKIE_NAME,
+  createSessionToken,
+  sessionCookieOptions,
+} from "@/lib/session";
 
 const setupSchema = z.object({
   pin: z.string().length(6).regex(/^\d{6}$/),
 });
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const parsed = setupSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -18,7 +23,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createClient();
+  const supabase = createAdminClient();
 
   const { count } = await supabase
     .from("pin_auth")
@@ -45,13 +50,11 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ success: true });
-  response.cookies.set("cuotas_auth", "true", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24, // 24 hours
-    path: "/",
-  });
+  response.cookies.set(
+    SESSION_COOKIE_NAME,
+    await createSessionToken(),
+    sessionCookieOptions()
+  );
 
   return response;
 }

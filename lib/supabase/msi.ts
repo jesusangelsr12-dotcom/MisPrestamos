@@ -1,20 +1,12 @@
-import { createClient } from "@/lib/supabase/client";
-import type { MSIExpense, MSIExpenseWithCard, ExpenseOwner } from "@/types";
+"use server";
 
-export interface MSIInput {
-  card_id: string;
-  description: string;
-  total_amount: number;
-  months: number;
-  start_date: string;
-  owner: ExpenseOwner;
-  owner_name: string | null;
-  has_final_payment?: boolean;
-  final_payment_amount?: number | null;
-}
+import { createAdminClient } from "@/lib/supabase/admin";
+import { requireSession } from "@/lib/auth-guard";
+import type { MSIExpense, MSIExpenseWithCard, MSIInput } from "@/types";
 
 export async function fetchMSIExpenses(): Promise<MSIExpenseWithCard[]> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("msi_expenses")
     .select("*, card:cards!card_id(name, bank, color, last_four)")
@@ -25,7 +17,8 @@ export async function fetchMSIExpenses(): Promise<MSIExpenseWithCard[]> {
 }
 
 export async function fetchMSIById(id: string): Promise<MSIExpenseWithCard | null> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("msi_expenses")
     .select("*, card:cards!card_id(name, bank, color, last_four)")
@@ -37,7 +30,11 @@ export async function fetchMSIById(id: string): Promise<MSIExpenseWithCard | nul
 }
 
 export async function insertMSI(input: MSIInput): Promise<MSIExpense> {
-  const supabase = createClient();
+  await requireSession();
+  if (!input.months || input.months <= 0) {
+    throw new Error("El número de meses debe ser mayor a 0");
+  }
+  const supabase = createAdminClient();
   const monthly_amount = input.total_amount / input.months;
 
   const { data, error } = await supabase
@@ -54,10 +51,12 @@ export async function updateMSIById(
   id: string,
   input: Partial<Omit<MSIInput, "card_id">>
 ): Promise<MSIExpense> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = { ...input };
   if (input.total_amount !== undefined && input.months !== undefined) {
+    if (input.months <= 0) throw new Error("El número de meses debe ser mayor a 0");
     updateData.monthly_amount = input.total_amount / input.months;
   } else if (input.total_amount !== undefined) {
     // Need to fetch current months
@@ -66,10 +65,11 @@ export async function updateMSIById(
       .select("months")
       .eq("id", id)
       .single();
-    if (current) {
+    if (current && current.months > 0) {
       updateData.monthly_amount = input.total_amount / current.months;
     }
   } else if (input.months !== undefined) {
+    if (input.months <= 0) throw new Error("El número de meses debe ser mayor a 0");
     const { data: current } = await supabase
       .from("msi_expenses")
       .select("total_amount")
@@ -92,60 +92,35 @@ export async function updateMSIById(
 }
 
 export async function deleteMSIById(id: string): Promise<void> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { error } = await supabase.from("msi_expenses").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 
+// Atomic mark-paid via Postgres function: increments months_paid and writes one
+// payment_history row per covered month in a single transaction.
 export async function markMSIMonthPaid(
   id: string,
   amount: number,
   monthsCovered: number = 1
 ): Promise<MSIExpense> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
 
-  const { data: current, error: fetchError } = await supabase
-    .from("msi_expenses")
-    .select("months_paid, months, description, has_final_payment")
-    .eq("id", id)
-    .single();
-
-  if (fetchError || !current) throw new Error("Gasto MSI no encontrado");
-  const totalMonths = current.has_final_payment ? current.months + 1 : current.months;
-  if (current.months_paid >= totalMonths) {
-    throw new Error("Este gasto ya está completado");
-  }
-
-  const newMonthsPaid = Math.min(current.months_paid + monthsCovered, totalMonths);
-
-  const { data, error } = await supabase
-    .from("msi_expenses")
-    .update({ months_paid: newMonthsPaid })
-    .eq("id", id)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc("mark_msi_paid", {
+    p_id: id,
+    p_months_covered: monthsCovered,
+    p_amount: amount,
+  });
 
   if (error) throw new Error(error.message);
-
-  // Record payment history
-  try {
-    await supabase.from("payment_history").insert({
-      entity_type: "msi",
-      entity_id: id,
-      entity_name: current.description,
-      month_number: current.months_paid + 1,
-      amount,
-      months_covered: monthsCovered,
-    });
-  } catch (err) {
-    console.error("[markMSIMonthPaid] Failed to insert history:", err);
-  }
-
   return data as MSIExpense;
 }
 
 export async function fetchMSIPaymentTotals(): Promise<Record<string, number>> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .select("entity_id, amount")
@@ -162,7 +137,8 @@ export async function fetchMSIPaymentTotals(): Promise<Record<string, number>> {
 export async function fetchLoanPaymentTotals(
   entityType: "loan_given" | "loan_received"
 ): Promise<Record<string, number>> {
-  const supabase = createClient();
+  await requireSession();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .select("entity_id, amount")

@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { LoanGiven, LoanReceived } from "@/types";
+import type {
+  LoanGiven,
+  LoanReceived,
+  LoanType,
+  LoanGivenInput,
+  LoanReceivedInput,
+} from "@/types";
 import {
   fetchLoansGiven,
   fetchLoansReceived,
@@ -11,9 +17,6 @@ import {
   updateLoanReceivedById,
   deleteLoanById,
   markLoanMonthPaid,
-  type LoanType,
-  type LoanGivenInput,
-  type LoanReceivedInput,
 } from "@/lib/supabase/loans";
 
 interface UseLoansReturn {

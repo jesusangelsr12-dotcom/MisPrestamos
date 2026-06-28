@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import type { LoanGiven, LoanReceived } from "@/types";
-import type { LoanType } from "@/lib/supabase/loans";
+import type { LoanGiven, LoanReceived, LoanType } from "@/types";
 import { PaymentHistorySheet } from "@/components/features/PaymentHistorySheet";
 import { PaymentModal } from "@/components/features/PaymentModal";
 

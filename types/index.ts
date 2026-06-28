@@ -59,6 +59,43 @@ export interface PinAuth {
   created_at: string;
 }
 
+// Input shapes for create/update operations. These live here (rather than in
+// the lib/supabase modules) because those modules are now "use server" files,
+// which may only export async functions.
+export type CardInput = Omit<Card, "id" | "created_at">;
+
+export type LoanType = "given" | "received";
+
+export interface LoanGivenInput {
+  borrower_name: string;
+  amount: number;
+  monthly_payment: number;
+  total_months: number;
+  start_date: string;
+  notes: string | null;
+}
+
+export interface LoanReceivedInput {
+  lender_name: string;
+  amount: number;
+  monthly_payment: number;
+  total_months: number;
+  start_date: string;
+  notes: string | null;
+}
+
+export interface MSIInput {
+  card_id: string;
+  description: string;
+  total_amount: number;
+  months: number;
+  start_date: string;
+  owner: ExpenseOwner;
+  owner_name: string | null;
+  has_final_payment?: boolean;
+  final_payment_amount?: number | null;
+}
+
 export type PaymentEntityType = "msi" | "loan_given" | "loan_received";
 
 export interface PaymentHistory {
