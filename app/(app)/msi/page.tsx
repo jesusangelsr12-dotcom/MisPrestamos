@@ -12,7 +12,7 @@ type FilterType = "all" | "me" | "other" | string;
 
 export default function MSIPage() {
   const router = useRouter();
-  const { expenses, loading, error, markPaid, deleteExpense, refresh } = useMSI();
+  const { expenses, paidTotals, loading, error, markPaid, deleteExpense, refresh } = useMSI();
   const [filter, setFilter] = useState<FilterType>("all");
   const [deleteError, setDeleteError] = useState("");
 
@@ -113,7 +113,7 @@ export default function MSIPage() {
                 <div className="flex flex-col gap-2">
                   {group.items.map((expense, i) => (
                     <motion.div key={expense.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.05, 0.3) }}>
-                      <MSICard expense={expense} onMarkPaid={handleMarkPaid} onEdit={(id) => router.push(`/msi/${id}/edit`)} onDelete={handleDelete} />
+                      <MSICard expense={expense} paidReal={paidTotals[expense.id]} onMarkPaid={handleMarkPaid} onEdit={(id) => router.push(`/msi/${id}/edit`)} onDelete={handleDelete} />
                     </motion.div>
                   ))}
                 </div>

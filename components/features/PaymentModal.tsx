@@ -9,6 +9,10 @@ interface PaymentModalProps {
   onConfirm: (amount: number, monthsCovered: number) => void;
   monthlyAmount: number;
   remainingMonths: number;
+  // Máximo de meses que la detección multi-mes puede cubrir a la tasa regular.
+  // Excluye el mes balloon (pago final), que tiene un monto distinto y debe
+  // pagarse por separado.
+  maxMultiMonth: number;
   currentMonth: number;
   totalMonths: number;
   isFinalMonth: boolean;
@@ -33,6 +37,7 @@ export function PaymentModal({
   onConfirm,
   monthlyAmount,
   remainingMonths,
+  maxMultiMonth,
   currentMonth,
   totalMonths,
   isFinalMonth,
@@ -40,13 +45,16 @@ export function PaymentModal({
 }: PaymentModalProps) {
   const defaultAmount = isFinalMonth && finalPaymentAmount ? finalPaymentAmount : monthlyAmount;
   const [amountStr, setAmountStr] = useState(String(defaultAmount));
-  const [selectedCover, setSelectedCover] = useState<number>(1);
+  // Modo de cobertura: false = solo 1 mes, true = todos los meses detectados.
+  // Guardamos un booleano (no el número) para que el monto a marcar se derive
+  // siempre del detectedMonths actual y nunca quede obsoleto al cambiar el monto.
+  const [coverAll, setCoverAll] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       const def = isFinalMonth && finalPaymentAmount ? finalPaymentAmount : monthlyAmount;
       setAmountStr(String(def));
-      setSelectedCover(1);
+      setCoverAll(false);
     }
   }, [isOpen, isFinalMonth, finalPaymentAmount, monthlyAmount]);
 
@@ -56,11 +64,16 @@ export function PaymentModal({
   }, [amountStr]);
 
   const detectedMonths = useMemo(() => {
+    const cap = Math.max(1, maxMultiMonth);
     if (monthlyAmount <= 0 || parsedAmount <= monthlyAmount) return 1;
-    return Math.min(Math.floor(parsedAmount / monthlyAmount), remainingMonths);
-  }, [parsedAmount, monthlyAmount, remainingMonths]);
+    return Math.min(Math.floor(parsedAmount / monthlyAmount), cap);
+  }, [parsedAmount, monthlyAmount, maxMultiMonth]);
 
   const showMultiMonth = detectedMonths > 1;
+  const monthsToMark = showMultiMonth && coverAll ? detectedMonths : 1;
+  // "Liquida completo" solo si el monto alcanza para TODOS los meses restantes.
+  // Con el cap maxMultiMonth, detectedMonths nunca incluye el mes balloon, así
+  // que un pago a tasa regular jamás afirma liquidar un compromiso con balloon.
   const coversAll = detectedMonths >= remainingMonths;
 
   return (
@@ -124,9 +137,9 @@ export function PaymentModal({
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setSelectedCover(1)}
-                    className={`flex h-9 flex-1 items-center justify-center rounded-lg text-[13px] font-medium transition-colors ${
-                      selectedCover === 1
+                    onClick={() => setCoverAll(false)}
+                    className={`flex min-h-[44px] flex-1 items-center justify-center rounded-lg text-[13px] font-medium transition-colors ${
+                      !coverAll
                         ? "bg-[#2C6CFF] text-white"
                         : "border border-[#EBEBEB] text-[#6B6B6B]"
                     }`}
@@ -135,9 +148,9 @@ export function PaymentModal({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setSelectedCover(detectedMonths)}
-                    className={`flex h-9 flex-1 items-center justify-center rounded-lg text-[13px] font-medium transition-colors ${
-                      selectedCover === detectedMonths
+                    onClick={() => setCoverAll(true)}
+                    className={`flex min-h-[44px] flex-1 items-center justify-center rounded-lg text-[13px] font-medium transition-colors ${
+                      coverAll
                         ? "bg-[#2C6CFF] text-white"
                         : "border border-[#EBEBEB] text-[#6B6B6B]"
                     }`}
@@ -154,7 +167,7 @@ export function PaymentModal({
                 Monto a registrar: {formatCurrency(parsedAmount)}
               </p>
               <p className="mt-0.5 text-[13px] text-[#6B6B6B]">
-                Meses a marcar: {showMultiMonth ? selectedCover : 1} de {remainingMonths} restantes
+                Meses a marcar: {monthsToMark} de {remainingMonths} restantes
               </p>
             </div>
 
@@ -175,7 +188,7 @@ export function PaymentModal({
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 disabled={parsedAmount <= 0}
-                onClick={() => onConfirm(parsedAmount, showMultiMonth ? selectedCover : 1)}
+                onClick={() => onConfirm(parsedAmount, monthsToMark)}
                 className="flex h-11 flex-1 items-center justify-center rounded-xl bg-[#2C6CFF] text-[15px] font-medium text-white disabled:opacity-50"
               >
                 Registrar pago

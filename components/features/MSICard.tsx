@@ -56,6 +56,9 @@ export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSI
 
   // Final month = the balloon month (month months+1), i.e. months_paid === months
   const isFinalMonth = expense.has_final_payment && expense.months_paid === expense.months;
+  // Meses regulares que el pago multi-mes puede cubrir (excluye el mes balloon).
+  const regularRemaining = Math.max(0, expense.months - expense.months_paid);
+  const maxMultiMonth = isFinalMonth ? 1 : Math.max(1, regularRemaining);
 
   return (
     <>
@@ -132,6 +135,7 @@ export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSI
         }}
         monthlyAmount={expense.monthly_amount}
         remainingMonths={remainingMonths}
+        maxMultiMonth={maxMultiMonth}
         currentMonth={expense.months_paid + 1}
         totalMonths={totalMonths}
         isFinalMonth={isFinalMonth}

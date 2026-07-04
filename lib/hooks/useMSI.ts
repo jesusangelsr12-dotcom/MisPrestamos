@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { MSIExpenseWithCard } from "@/types";
 import {
   fetchMSIExpenses,
+  fetchMSIPaymentTotals,
   insertMSI,
   updateMSIById,
   deleteMSIById,
@@ -13,6 +14,9 @@ import {
 
 interface UseMSIReturn {
   expenses: MSIExpenseWithCard[];
+  // Total realmente pagado por gasto (suma del historial). undefined = sin
+  // historial → la card cae a la estimación monthly_amount × months_paid.
+  paidTotals: Record<string, number>;
   loading: boolean;
   error: string | null;
   createExpense: (data: MSIInput) => Promise<void>;
@@ -24,6 +28,7 @@ interface UseMSIReturn {
 
 export function useMSI(): UseMSIReturn {
   const [expenses, setExpenses] = useState<MSIExpenseWithCard[]>([]);
+  const [paidTotals, setPaidTotals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +41,12 @@ export function useMSI(): UseMSIReturn {
         setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
       );
 
-      const data = await Promise.race([fetchMSIExpenses(), timeout]);
+      const [data, totals] = await Promise.race([
+        Promise.all([fetchMSIExpenses(), fetchMSIPaymentTotals()]),
+        timeout,
+      ]);
       setExpenses(data);
+      setPaidTotals(totals);
     } catch (err) {
       console.error("[useMSI] Error loading expenses:", err);
       setError(err instanceof Error ? err.message : "Error al cargar gastos MSI");
@@ -80,7 +89,9 @@ export function useMSI(): UseMSIReturn {
 
   const markPaid = useCallback(
     async (id: string, amount: number, monthsCovered: number) => {
-      // Optimistic update
+      const target = expenses.find((e) => e.id === id);
+
+      // Optimistic update: contador de meses y total pagado juntos.
       setExpenses((prev) =>
         prev.map((e) => {
           if (e.id !== id) return e;
@@ -88,6 +99,12 @@ export function useMSI(): UseMSIReturn {
           return { ...e, months_paid: Math.min(e.months_paid + monthsCovered, total) };
         })
       );
+      setPaidTotals((prev) => {
+        const base =
+          prev[id] ??
+          (target ? target.monthly_amount * Math.min(target.months_paid, target.months) : 0);
+        return { ...prev, [id]: base + amount };
+      });
 
       try {
         await markMSIMonthPaid(id, amount, monthsCovered);
@@ -96,11 +113,12 @@ export function useMSI(): UseMSIReturn {
         throw err;
       }
     },
-    [loadExpenses]
+    [expenses, loadExpenses]
   );
 
   return {
     expenses,
+    paidTotals,
     loading,
     error,
     createExpense,

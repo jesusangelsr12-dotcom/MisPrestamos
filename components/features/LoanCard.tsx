@@ -120,6 +120,7 @@ export function LoanCard({ loan, type, paidReal, onMarkPaid, onEdit, onDelete }:
         }}
         monthlyAmount={loan.monthly_payment}
         remainingMonths={remainingMonths}
+        maxMultiMonth={remainingMonths}
         currentMonth={loan.months_paid + 1}
         totalMonths={loan.total_months}
         isFinalMonth={isFinalMonth}

@@ -57,27 +57,28 @@ export async function updateMSIById(
   const supabase = createClient();
 
   const updateData: Record<string, unknown> = { ...input };
-  if (input.total_amount !== undefined && input.months !== undefined) {
-    updateData.monthly_amount = input.total_amount / input.months;
-  } else if (input.total_amount !== undefined) {
-    // Need to fetch current months
-    const { data: current } = await supabase
+
+  // Si cambian total o meses hace falta el estado actual (para recalcular la
+  // mensualidad y para validar que meses no baje de los ya pagados).
+  const needsCurrent =
+    input.total_amount !== undefined || input.months !== undefined;
+  if (needsCurrent) {
+    const { data: current, error: currentError } = await supabase
       .from("msi_expenses")
-      .select("months")
+      .select("months, total_amount, months_paid")
       .eq("id", id)
       .single();
-    if (current) {
-      updateData.monthly_amount = input.total_amount / current.months;
+    if (currentError || !current) throw new Error("Gasto MSI no encontrado");
+
+    const nextMonths = input.months ?? current.months;
+    if (nextMonths < current.months_paid) {
+      throw new Error(
+        `No puedes fijar ${nextMonths} meses: ya hay ${current.months_paid} pagados`
+      );
     }
-  } else if (input.months !== undefined) {
-    const { data: current } = await supabase
-      .from("msi_expenses")
-      .select("total_amount")
-      .eq("id", id)
-      .single();
-    if (current) {
-      updateData.monthly_amount = current.total_amount / input.months;
-    }
+
+    const nextTotal = input.total_amount ?? current.total_amount;
+    updateData.monthly_amount = nextTotal / nextMonths;
   }
 
   const { data, error } = await supabase
@@ -127,18 +128,24 @@ export async function markMSIMonthPaid(
 
   if (error) throw new Error(error.message);
 
-  // Record payment history
-  try {
-    await supabase.from("payment_history").insert({
-      entity_type: "msi",
-      entity_id: id,
-      entity_name: current.description,
-      month_number: current.months_paid + 1,
-      amount,
-      months_covered: monthsCovered,
-    });
-  } catch (err) {
-    console.error("[markMSIMonthPaid] Failed to insert history:", err);
+  // Registrar el historial. El cliente supabase-js resuelve con { error } en vez
+  // de lanzar, así que hay que revisarlo explícitamente. Si falla, compensamos
+  // revirtiendo months_paid para que contador e historial no diverjan.
+  const { error: historyError } = await supabase.from("payment_history").insert({
+    entity_type: "msi",
+    entity_id: id,
+    entity_name: current.description,
+    month_number: current.months_paid + 1,
+    amount,
+    months_covered: monthsCovered,
+  });
+
+  if (historyError) {
+    await supabase
+      .from("msi_expenses")
+      .update({ months_paid: current.months_paid })
+      .eq("id", id);
+    throw new Error(`No se pudo registrar el pago: ${historyError.message}`);
   }
 
   return data as MSIExpense;
@@ -159,19 +166,3 @@ export async function fetchMSIPaymentTotals(): Promise<Record<string, number>> {
   return totals;
 }
 
-export async function fetchLoanPaymentTotals(
-  entityType: "loan_given" | "loan_received"
-): Promise<Record<string, number>> {
-  const supabase = createClient();
-  const { data, error } = await supabase
-    .from("payment_history")
-    .select("entity_id, amount")
-    .eq("entity_type", entityType);
-
-  if (error) return {};
-  const totals: Record<string, number> = {};
-  for (const row of (data ?? [])) {
-    totals[row.entity_id] = (totals[row.entity_id] ?? 0) + row.amount;
-  }
-  return totals;
-}

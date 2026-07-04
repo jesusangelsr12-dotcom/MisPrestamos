@@ -5,6 +5,7 @@ import type { LoanGiven, LoanReceived } from "@/types";
 import {
   fetchLoansGiven,
   fetchLoansReceived,
+  fetchLoanPaymentTotals,
   insertLoanGiven,
   insertLoanReceived,
   updateLoanGivenById,
@@ -19,6 +20,8 @@ import {
 interface UseLoansReturn {
   given: LoanGiven[];
   received: LoanReceived[];
+  // Total realmente pagado por préstamo (suma del historial), keyed by id.
+  paidTotals: Record<string, number>;
   loading: boolean;
   error: string | null;
   createLoan: (data: LoanGivenInput | LoanReceivedInput, type: LoanType) => Promise<void>;
@@ -31,6 +34,7 @@ interface UseLoansReturn {
 export function useLoans(): UseLoansReturn {
   const [given, setGiven] = useState<LoanGiven[]>([]);
   const [received, setReceived] = useState<LoanReceived[]>([]);
+  const [paidTotals, setPaidTotals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,12 +47,18 @@ export function useLoans(): UseLoansReturn {
         setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
       );
 
-      const [g, r] = await Promise.race([
-        Promise.all([fetchLoansGiven(), fetchLoansReceived()]),
+      const [g, r, givenTotals, receivedTotals] = await Promise.race([
+        Promise.all([
+          fetchLoansGiven(),
+          fetchLoansReceived(),
+          fetchLoanPaymentTotals("loan_given"),
+          fetchLoanPaymentTotals("loan_received"),
+        ]),
         timeout,
       ]);
       setGiven(g);
       setReceived(r);
+      setPaidTotals({ ...givenTotals, ...receivedTotals });
     } catch (err) {
       console.error("[useLoans] Error loading:", err);
       setError(err instanceof Error ? err.message : "Error al cargar préstamos");
@@ -116,6 +126,9 @@ export function useLoans(): UseLoansReturn {
 
   const markPaid = useCallback(
     async (id: string, type: LoanType, amount: number, monthsCovered: number) => {
+      const list = type === "given" ? given : received;
+      const target = list.find((l) => l.id === id);
+
       if (type === "given") {
         setGiven((prev) =>
           prev.map((l) =>
@@ -133,6 +146,10 @@ export function useLoans(): UseLoansReturn {
           )
         );
       }
+      setPaidTotals((prev) => {
+        const base = prev[id] ?? (target ? target.monthly_payment * target.months_paid : 0);
+        return { ...prev, [id]: base + amount };
+      });
 
       try {
         await markLoanMonthPaid(id, type, amount, monthsCovered);
@@ -141,12 +158,13 @@ export function useLoans(): UseLoansReturn {
         throw err;
       }
     },
-    [load]
+    [given, received, load]
   );
 
   return {
     given,
     received,
+    paidTotals,
     loading,
     error,
     createLoan,

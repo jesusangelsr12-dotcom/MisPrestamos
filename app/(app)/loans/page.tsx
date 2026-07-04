@@ -13,7 +13,7 @@ type Tab = "given" | "received";
 
 export default function LoansPage() {
   const router = useRouter();
-  const { given, received, loading, error, markPaid, deleteLoan, refresh } = useLoans();
+  const { given, received, paidTotals, loading, error, markPaid, deleteLoan, refresh } = useLoans();
   const [tab, setTab] = useState<Tab>("given");
   const [actionError, setActionError] = useState("");
 
@@ -77,7 +77,7 @@ export default function LoansPage() {
                 <div className="flex flex-col gap-2">
                   {list.map((loan, i) => (
                     <motion.div key={loan.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.05, 0.3) }}>
-                      <LoanCard loan={loan} type={tab} onMarkPaid={handleMarkPaid} onEdit={(id) => router.push(`/loans/${id}/edit?type=${tab}`)} onDelete={handleDelete} />
+                      <LoanCard loan={loan} type={tab} paidReal={paidTotals[loan.id]} onMarkPaid={handleMarkPaid} onEdit={(id) => router.push(`/loans/${id}/edit?type=${tab}`)} onDelete={handleDelete} />
                     </motion.div>
                   ))}
                 </div>
