@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import {
+  SESSION_COOKIE,
+  SESSION_COOKIE_OPTIONS,
+  createSessionToken,
+} from "@/lib/auth/session";
 
 const setupSchema = z.object({
   pin: z.string().length(6).regex(/^\d{6}$/),
@@ -20,11 +25,20 @@ export async function POST(request: Request) {
 
   const supabase = createClient();
 
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from("pin_auth")
     .select("*", { count: "exact", head: true });
 
-  if (count && count > 0) {
+  // Si no podemos verificar el estado actual, fallamos en cerrado en vez de
+  // insertar un segundo PIN (que dejaría la verificación no determinista).
+  if (countError) {
+    return NextResponse.json(
+      { error: "Error al verificar PIN" },
+      { status: 500 }
+    );
+  }
+
+  if ((count ?? 0) > 0) {
     return NextResponse.json(
       { error: "PIN ya configurado" },
       { status: 409 }
@@ -44,14 +58,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const token = await createSessionToken(Date.now());
   const response = NextResponse.json({ success: true });
-  response.cookies.set("cuotas_auth", "true", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24, // 24 hours
-    path: "/",
-  });
+  response.cookies.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS);
 
   return response;
 }

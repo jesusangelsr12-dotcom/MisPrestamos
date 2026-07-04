@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import {
+  SESSION_COOKIE,
+  SESSION_COOKIE_OPTIONS,
+  createSessionToken,
+} from "@/lib/auth/session";
 
 const verifySchema = z.object({
   pin: z.string().length(6).regex(/^\d{6}$/),
@@ -23,6 +28,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("pin_auth")
     .select("hashed_pin")
+    .order("created_at", { ascending: true })
     .limit(1)
     .single();
 
@@ -42,14 +48,9 @@ export async function POST(request: Request) {
     );
   }
 
+  const token = await createSessionToken(Date.now());
   const response = NextResponse.json({ success: true });
-  response.cookies.set("cuotas_auth", "true", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24, // 24 hours
-    path: "/",
-  });
+  response.cookies.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS);
 
   return response;
 }
