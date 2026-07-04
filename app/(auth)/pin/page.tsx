@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { PinKeypad } from "@/components/features/PinKeypad";
 import { usePin } from "@/lib/hooks/usePin";
 
@@ -47,7 +47,7 @@ export default function PinPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 pb-safe pt-safe">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -72,13 +72,13 @@ export default function PinPage() {
         />
 
         {error && !isLocked && (
-          <motion.p
+          <m.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="mt-6 text-[14px] font-medium text-[#EF4444]"
           >
             {error}
-          </motion.p>
+          </m.p>
         )}
 
         {!isLocked && attempts > 0 && attempts < 3 && (
@@ -89,7 +89,7 @@ export default function PinPage() {
         )}
 
         {isLocked && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="mt-6 flex flex-col items-center gap-1"
@@ -100,9 +100,9 @@ export default function PinPage() {
             <p className="font-mono text-2xl font-medium text-[#EF4444]">
               {lockoutSeconds}s
             </p>
-          </motion.div>
+          </m.div>
         )}
-      </motion.div>
+      </m.div>
     </main>
   );
 }

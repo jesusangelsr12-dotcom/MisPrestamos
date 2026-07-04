@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { PinKeypad } from "@/components/features/PinKeypad";
 import { usePin } from "@/lib/hooks/usePin";
 
@@ -48,7 +48,7 @@ export default function SetupPinPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 pb-safe pt-safe">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -67,7 +67,7 @@ export default function SetupPinPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={step}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -86,17 +86,17 @@ export default function SetupPinPage() {
               shake={shake}
               disabled={loading}
             />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
 
         {error && (
-          <motion.p
+          <m.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="mt-6 text-[14px] font-medium text-[#EF4444]"
           >
             {error}
-          </motion.p>
+          </m.p>
         )}
 
         {step === "confirm" && (
@@ -112,7 +112,7 @@ export default function SetupPinPage() {
             Volver a ingresar
           </button>
         )}
-      </motion.div>
+      </m.div>
     </main>
   );
 }

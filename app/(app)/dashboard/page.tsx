@@ -2,32 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useDashboard } from "@/lib/hooks/useDashboard";
 import { BottomNav } from "@/components/features/BottomNav";
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
+import { formatCurrency, getProgressColor } from "@/lib/utils/format";
 function getMonthName(): string {
   const now = new Date();
   const month = now.toLocaleDateString("es-MX", { month: "long" });
   const year = now.getFullYear();
   return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
 }
-
-function getProgressColor(pct: number): string {
-  if (pct <= 40) return "#2C6CFF";
-  if (pct <= 75) return "#F59E0B";
-  return "#00A878";
-}
-
 function AnimatedNumber({ value }: { value: number }) {
   const [display, setDisplay] = useState(0);
 
@@ -122,15 +106,15 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
-      <motion.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-5">
+      <m.div variants={stagger} initial="hidden" animate="show" className="flex flex-col gap-5">
         {/* Header */}
-        <motion.div variants={fadeUp} className="pt-6">
+        <m.div variants={fadeUp} className="pt-6">
           <h1 className="font-display text-[28px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Hola, Jesús 👋</h1>
           <p className="mt-1 text-[14px] text-[#6B6B6B]">{getMonthName()}</p>
-        </motion.div>
+        </m.div>
 
         {/* Hero Card */}
-        <motion.div variants={fadeUp} className="relative overflow-hidden rounded-2xl bg-[#2C6CFF] px-5 py-6">
+        <m.div variants={fadeUp} className="relative overflow-hidden rounded-2xl bg-[#2C6CFF] px-5 py-6">
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/[0.07]" />
           <div className="pointer-events-none absolute -bottom-10 -left-10 h-28 w-28 rounded-full bg-white/[0.05]" />
 
@@ -153,10 +137,10 @@ export default function DashboardPage() {
               </span>
             ))}
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Summary chips */}
-        <motion.div variants={fadeUp} className="grid grid-cols-3 gap-2">
+        <m.div variants={fadeUp} className="grid grid-cols-3 gap-2">
           {[
             { label: "Activos", value: activeCount },
             { label: "Tarjetas", value: cards.length },
@@ -167,11 +151,11 @@ export default function DashboardPage() {
               <span className="mt-1 font-mono text-[18px] font-medium text-[#1A1A1A]">{chip.value}</span>
             </div>
           ))}
-        </motion.div>
+        </m.div>
 
         {/* Active MSI */}
         {activeMSI.length > 0 && (
-          <motion.div variants={fadeUp}>
+          <m.div variants={fadeUp}>
             <div className="mb-2 flex items-center justify-between px-1">
               <span className="text-[12px] font-semibold uppercase text-[#A8A8A8]">MSI Activos</span>
               <Link href="/msi" className="text-[13px] font-medium text-[#2C6CFF]">Ver todos</Link>
@@ -199,12 +183,12 @@ export default function DashboardPage() {
                 );
               })}
             </div>
-          </motion.div>
+          </m.div>
         )}
 
         {/* Active Loans */}
         {mixedLoans.length > 0 && (
-          <motion.div variants={fadeUp}>
+          <m.div variants={fadeUp}>
             <div className="mb-2 flex items-center justify-between px-1">
               <span className="text-[12px] font-semibold uppercase text-[#A8A8A8]">Préstamos</span>
               <Link href="/loans" className="text-[13px] font-medium text-[#2C6CFF]">Ver todos</Link>
@@ -238,9 +222,9 @@ export default function DashboardPage() {
                 );
               })}
             </div>
-          </motion.div>
+          </m.div>
         )}
-      </motion.div>
+      </m.div>
       <BottomNav />
     </main>
   );

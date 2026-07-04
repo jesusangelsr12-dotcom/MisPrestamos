@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { MonthProjectionCard } from "@/components/features/MonthProjectionCard";
 import { BottomNav } from "@/components/features/BottomNav";
 import { useProjection } from "@/lib/hooks/useProjection";
@@ -17,7 +17,7 @@ export default function ProjectionPage() {
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <div className="pb-4 pt-6">
           <h1 className="font-display text-[28px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Proyección</h1>
           <p className="mt-1 text-[14px] text-[#6B6B6B]">Próximos 12 meses</p>
@@ -35,7 +35,7 @@ export default function ProjectionPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {projection.map((p, i) => (
-              <motion.div key={p.month.toISOString()} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.3) }}>
+              <m.div key={p.month.toISOString()} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.3) }}>
                 <MonthProjectionCard
                   month={p.month} msiTotal={p.msiTotal} loansGivenTotal={p.loansGivenTotal}
                   loansReceivedTotal={p.loansReceivedTotal} total={p.total}
@@ -43,11 +43,11 @@ export default function ProjectionPage() {
                   expanded={expandedIndex === i}
                   onToggle={() => setExpandedIndex(expandedIndex === i ? -1 : i)}
                 />
-              </motion.div>
+              </m.div>
             ))}
           </div>
         )}
-      </motion.div>
+      </m.div>
       <BottomNav />
     </main>
   );

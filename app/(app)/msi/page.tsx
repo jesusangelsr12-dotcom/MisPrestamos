@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { MSICard } from "@/components/features/MSICard";
 import { BottomNav } from "@/components/features/BottomNav";
 import { useMSI } from "@/lib/hooks/useMSI";
@@ -61,7 +61,7 @@ export default function MSIPage() {
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <div className="pb-4 pt-6">
           <h1 className="font-display text-[28px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Gastos MSI</h1>
         </div>
@@ -112,16 +112,16 @@ export default function MSIPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {group.items.map((expense, i) => (
-                    <motion.div key={expense.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.05, 0.3) }}>
+                    <m.div key={expense.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.05, 0.3) }}>
                       <MSICard expense={expense} paidReal={paidTotals[expense.id]} onMarkPaid={handleMarkPaid} onEdit={(id) => router.push(`/msi/${id}/edit`)} onDelete={handleDelete} />
-                    </motion.div>
+                    </m.div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {expenses.length > 0 && (
         <Link href="/msi/new" className="fixed bottom-24 right-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[#2C6CFF] text-white" style={{ boxShadow: "0 4px 16px rgba(44,108,255,0.35)" }}>

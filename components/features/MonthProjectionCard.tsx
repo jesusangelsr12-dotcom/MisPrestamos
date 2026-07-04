@@ -1,6 +1,7 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface MonthProjectionCardProps {
   month: Date;
@@ -12,11 +13,6 @@ interface MonthProjectionCardProps {
   expanded: boolean;
   onToggle: () => void;
 }
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
 function getMonthLabel(date: Date): string {
   const month = date.toLocaleDateString("es-MX", { month: "long" });
   const year = date.getFullYear();
@@ -50,7 +46,7 @@ export function MonthProjectionCard({
 
           <AnimatePresence initial={false}>
             {expanded && !isEmpty && (
-              <motion.div
+              <m.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
@@ -69,7 +65,7 @@ export function MonthProjectionCard({
                     </div>
                   ))}
                 </div>
-              </motion.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>

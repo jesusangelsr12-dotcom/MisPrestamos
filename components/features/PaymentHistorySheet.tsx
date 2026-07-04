@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { CalendarCheck } from "lucide-react";
 import { usePaymentHistoryByEntity } from "@/lib/hooks/usePaymentHistory";
 import type { PaymentEntityType } from "@/types";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface PaymentHistorySheetProps {
   isOpen: boolean;
@@ -12,16 +13,6 @@ interface PaymentHistorySheetProps {
   entityName: string;
   entityType: PaymentEntityType;
 }
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
 function formatDate(iso: string): string {
   const d = new Date(iso);
   const day = String(d.getDate()).padStart(2, "0");
@@ -40,8 +31,8 @@ export function PaymentHistorySheet({ isOpen, onClose, entityId, entityName }: P
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[4px]" />
-          <motion.div
+          <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[4px]" />
+          <m.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -98,7 +89,7 @@ export function PaymentHistorySheet({ isOpen, onClose, entityId, entityName }: P
                 </div>
               )}
             </div>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

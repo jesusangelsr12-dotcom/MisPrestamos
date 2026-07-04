@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { LoanGiven, LoanReceived } from "@/types";
 import type { LoanType } from "@/lib/supabase/loans";
 import { PaymentHistorySheet } from "@/components/features/PaymentHistorySheet";
 import { PaymentModal } from "@/components/features/PaymentModal";
+import { formatCurrency, getProgressColor } from "@/lib/utils/format";
 
 interface LoanCardProps {
   loan: LoanGiven | LoanReceived;
@@ -15,17 +16,6 @@ interface LoanCardProps {
   onEdit: (id: string) => void;
   onDelete: (id: string, type: LoanType) => void;
 }
-
-function getProgressColor(pct: number): string {
-  if (pct <= 40) return "#2C6CFF";
-  if (pct <= 75) return "#F59E0B";
-  return "#00A878";
-}
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
-
 function getPersonName(loan: LoanGiven | LoanReceived, type: LoanType): string {
   if (type === "given") return (loan as LoanGiven).borrower_name;
   return (loan as LoanReceived).lender_name;
@@ -65,7 +55,7 @@ export function LoanCard({ loan, type, paidReal, onMarkPaid, onEdit, onDelete }:
 
         <div className="mt-4">
           <div className="h-1 w-full overflow-hidden rounded-full bg-[#E8E8E5]">
-            <motion.div className="h-full rounded-full" style={{ backgroundColor: progressColor }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
+            <m.div className="h-full rounded-full" style={{ backgroundColor: progressColor }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
           </div>
         </div>
 
@@ -95,9 +85,9 @@ export function LoanCard({ loan, type, paidReal, onMarkPaid, onEdit, onDelete }:
           {isComplete ? (
             <div className="flex h-11 items-center justify-center rounded-xl bg-[#E6F7F3] text-[15px] font-medium text-[#00A878]">✓ Completado</div>
           ) : (
-            <motion.button type="button" onClick={() => setPaymentOpen(true)} whileTap={{ scale: 0.97 }} className="flex h-11 w-full items-center justify-center rounded-xl border border-[#2C6CFF] text-[15px] font-medium text-[#2C6CFF]">
+            <m.button type="button" onClick={() => setPaymentOpen(true)} whileTap={{ scale: 0.97 }} className="flex h-11 w-full items-center justify-center rounded-xl border border-[#2C6CFF] text-[15px] font-medium text-[#2C6CFF]">
               Marcar mes pagado
-            </motion.button>
+            </m.button>
           )}
         </div>
 

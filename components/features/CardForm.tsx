@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import type { CardInput } from "@/lib/supabase/cards";
 
 const PRESET_COLORS = ["#2C6CFF", "#00A878", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#0EA5E9", "#1A1A1A"];
@@ -79,9 +79,9 @@ export function CardForm({ initialData, onSubmit, submitLabel }: CardFormProps) 
           {PRESET_COLORS.map((c) => (
             <button key={c} type="button" onClick={() => setColor(c)} className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: c }} aria-label={`Color ${c}`}>
               {color === c && (
-                <motion.svg initial={{ scale: 0 }} animate={{ scale: 1 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <m.svg initial={{ scale: 0 }} animate={{ scale: 1 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
-                </motion.svg>
+                </m.svg>
               )}
             </button>
           ))}

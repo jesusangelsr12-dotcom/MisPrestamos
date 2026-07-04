@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
+import { formatCurrency } from "@/lib/utils/format";
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -18,16 +19,6 @@ interface PaymentModalProps {
   isFinalMonth: boolean;
   finalPaymentAmount: number | null;
 }
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
 const inputCls =
   "h-12 w-full rounded-[10px] border border-[#EBEBEB] bg-white px-3.5 text-[15px] text-[#1A1A1A] placeholder:text-[#A8A8A8] focus:border-[#2C6CFF] focus:outline-none focus:ring-[3px] focus:ring-[#2C6CFF]/12 font-mono";
 
@@ -80,14 +71,14 @@ export function PaymentModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[4px]"
           />
-          <motion.div
+          <m.div
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -184,7 +175,7 @@ export function PaymentModal({
               >
                 Cancelar
               </button>
-              <motion.button
+              <m.button
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 disabled={parsedAmount <= 0}
@@ -192,9 +183,9 @@ export function PaymentModal({
                 className="flex h-11 flex-1 items-center justify-center rounded-xl bg-[#2C6CFF] text-[15px] font-medium text-white disabled:opacity-50"
               >
                 Registrar pago
-              </motion.button>
+              </m.button>
             </div>
-          </motion.div>
+          </m.div>
         </>
       )}
     </AnimatePresence>

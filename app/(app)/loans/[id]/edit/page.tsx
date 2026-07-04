@@ -9,6 +9,7 @@ import {
   fetchLoanReceivedById,
   type LoanType,
 } from "@/lib/supabase/loans";
+import { formatCurrency } from "@/lib/utils/format";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
 
@@ -23,16 +24,6 @@ const loanSchema = z.object({
   start_date: z.string().min(1, "Fecha requerida"),
   notes: z.string().nullable(),
 });
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
 export default function EditLoanPage() {
   return (
     <Suspense fallback={<main className="flex min-h-screen items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2C6CFF] border-t-transparent" /></main>}>

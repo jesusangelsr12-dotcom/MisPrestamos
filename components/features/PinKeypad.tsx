@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 interface PinKeypadProps {
   onComplete: (pin: string) => void;
@@ -57,7 +57,7 @@ export function PinKeypad({
   return (
     <div className="flex flex-col items-center gap-10">
       {/* PIN Dots */}
-      <motion.div
+      <m.div
         className="flex gap-4"
         animate={shake ? { x: [0, -10, 10, -10, 10, 0] } : {}}
         transition={{ duration: 0.4 }}
@@ -72,7 +72,7 @@ export function PinKeypad({
             }`}
           />
         ))}
-      </motion.div>
+      </m.div>
 
       {/* Keypad Grid */}
       <div className="grid grid-cols-3 gap-4">
@@ -82,7 +82,7 @@ export function PinKeypad({
           }
 
           return (
-            <motion.button
+            <m.button
               key={i}
               type="button"
               disabled={disabled}
@@ -131,7 +131,7 @@ export function PinKeypad({
                   )}
                 </>
               )}
-            </motion.button>
+            </m.button>
           );
         })}
       </div>

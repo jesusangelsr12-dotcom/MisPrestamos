@@ -6,6 +6,7 @@ import { z } from "zod";
 import { fetchMSIById } from "@/lib/supabase/msi";
 import { useMSI } from "@/lib/hooks/useMSI";
 import type { MSIExpenseWithCard, ExpenseOwner } from "@/types";
+import { formatCurrency } from "@/lib/utils/format";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
 
@@ -19,16 +20,6 @@ const msiSchema = z.object({
   has_final_payment: z.boolean(),
   final_payment_amount: z.number().positive("Debe ser mayor a 0").nullable(),
 });
-
-function formatCurrency(n: number): string {
-  return n.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
 export default function EditMSIPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();

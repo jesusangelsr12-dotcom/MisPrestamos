@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 interface CardListItemProps {
   name: string;
@@ -12,7 +12,7 @@ interface CardListItemProps {
 
 export function CardListItem({ name, bank, lastFour, color, onTap }: CardListItemProps) {
   return (
-    <motion.button
+    <m.button
       type="button"
       onClick={onTap}
       className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-4 text-left"
@@ -32,6 +32,6 @@ export function CardListItem({ name, bank, lastFour, color, onTap }: CardListIte
       <span className="font-mono text-[14px] text-[#6B6B6B]">
         •••• {lastFour}
       </span>
-    </motion.button>
+    </m.button>
   );
 }

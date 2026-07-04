@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { CardListItem } from "@/components/features/CardListItem";
 import { useCards } from "@/lib/hooks/useCards";
 import { BottomNav } from "@/components/features/BottomNav";
@@ -30,7 +30,7 @@ export default function CardsPage() {
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      <m.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         {/* Header */}
         <div className="pb-4 pt-6">
           <h1 className="font-display text-[28px] font-semibold text-[#1A1A1A]" style={{ letterSpacing: "-0.5px" }}>Tarjetas</h1>
@@ -59,7 +59,7 @@ export default function CardsPage() {
         ) : (
           <div className="flex flex-col gap-2">
             {cards.map((card, i) => (
-              <motion.div
+              <m.div
                 key={card.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -72,11 +72,11 @@ export default function CardsPage() {
                   color={card.color}
                   onTap={() => setSelected(card)}
                 />
-              </motion.div>
+              </m.div>
             ))}
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* FAB */}
       {cards.length > 0 && (
@@ -96,8 +96,8 @@ export default function CardsPage() {
       <AnimatePresence>
         {selected && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setSelected(null); setDeleteError(""); }} className="fixed inset-0 z-40 bg-black/30" />
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white px-5 pb-safe pt-5">
+            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setSelected(null); setDeleteError(""); }} className="fixed inset-0 z-40 bg-black/30" />
+            <m.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white px-5 pb-safe pt-5">
               <div className="mb-4 flex items-center gap-3">
                 <span className="block h-3 w-3 rounded-full" style={{ backgroundColor: selected.color }} />
                 <div>
@@ -111,7 +111,7 @@ export default function CardsPage() {
                 <button type="button" onClick={handleDelete} disabled={deleting} className="flex h-12 items-center justify-center rounded-xl text-[15px] font-medium text-[#EF4444] disabled:opacity-50">{deleting ? "Eliminando..." : "Eliminar"}</button>
                 <button type="button" onClick={() => { setSelected(null); setDeleteError(""); }} className="flex h-12 items-center justify-center rounded-xl text-[15px] text-[#A8A8A8]">Cancelar</button>
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
