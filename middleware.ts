@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/pin", "/setup-pin", "/api/pin"];
+const PUBLIC_PATHS = ["/pin", "/setup-pin", "/api/pin", "/api/keep-alive"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
