@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { MSIExpenseWithCard } from "@/types";
+import { getMSITotalMonths, isMSIActive, getMSIEstimatedRemaining } from "@/lib/utils/finance";
 import { OwnerTag } from "@/components/features/OwnerTag";
 import { PaymentHistorySheet } from "@/components/features/PaymentHistorySheet";
 import { PaymentModal } from "@/components/features/PaymentModal";
@@ -35,21 +36,11 @@ export function MSICard({ expense, paidReal, onMarkPaid, onEdit, onDelete }: MSI
   const [paymentOpen, setPaymentOpen] = useState(false);
   const { card } = expense;
 
-  const totalMonths = expense.has_final_payment ? expense.months + 1 : expense.months;
+  const totalMonths = getMSITotalMonths(expense);
   const pct = totalMonths > 0 ? (expense.months_paid / totalMonths) * 100 : 0;
-  const isComplete = expense.months_paid >= totalMonths;
+  const isComplete = !isMSIActive(expense);
   const remainingMonths = totalMonths - expense.months_paid;
-
-  // Est. restante: regular months remaining * monthly_amount + final if unpaid
-  let estimatedRemaining = 0;
-  if (expense.months_paid < expense.months) {
-    estimatedRemaining = expense.monthly_amount * (expense.months - expense.months_paid);
-    if (expense.has_final_payment && expense.final_payment_amount) {
-      estimatedRemaining += expense.final_payment_amount;
-    }
-  } else if (expense.months_paid === expense.months && expense.has_final_payment && expense.final_payment_amount) {
-    estimatedRemaining = expense.final_payment_amount;
-  }
+  const estimatedRemaining = getMSIEstimatedRemaining(expense);
 
   const paidDisplay = paidReal !== undefined ? paidReal : expense.monthly_amount * Math.min(expense.months_paid, expense.months);
   const progressColor = getProgressColor(pct);

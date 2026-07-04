@@ -1,55 +1,39 @@
-import type { MSIExpense, LoanGiven, LoanReceived } from "@/types";
+import type { MSIExpense } from "@/types";
 
-export function calculateMonthlyPayment(total: number, months: number): number {
-  if (months <= 0) return 0;
-  return total / months;
-}
+// Módulo canónico del "schedule" de un gasto MSI. Todos los consumidores
+// (cards, dashboard, proyección) deben derivar meses/montos de aquí para no
+// re-implementar la regla del mes balloon en cada archivo.
 
-export function calculateRemainingAmount(
-  monthlyAmount: number,
-  monthsRemaining: number
-): number {
-  if (monthsRemaining <= 0) return 0;
-  return monthlyAmount * monthsRemaining;
-}
-
-function getMSITotalMonths(e: MSIExpense): number {
+/** Total de meses de pago, incluyendo el mes balloon (pago final) si aplica. */
+export function getMSITotalMonths(e: Pick<MSIExpense, "has_final_payment" | "months">): number {
   return e.has_final_payment ? e.months + 1 : e.months;
 }
 
-function getMSICurrentMonthAmount(e: MSIExpense): number {
-  if (e.has_final_payment && e.months_paid === e.months && e.final_payment_amount) {
+/** ¿Sigue activo? (quedan meses por pagar, balloon incluido) */
+export function isMSIActive(
+  e: Pick<MSIExpense, "has_final_payment" | "months" | "months_paid">
+): boolean {
+  return e.months_paid < getMSITotalMonths(e);
+}
+
+/**
+ * Estimación del monto restante: meses regulares pendientes × mensualidad,
+ * más el pago final si aún no se ha pagado el mes balloon.
+ */
+export function getMSIEstimatedRemaining(
+  e: Pick<
+    MSIExpense,
+    "has_final_payment" | "months" | "months_paid" | "monthly_amount" | "final_payment_amount"
+  >
+): number {
+  if (e.months_paid < e.months) {
+    const regular = e.monthly_amount * (e.months - e.months_paid);
+    const balloon = e.has_final_payment && e.final_payment_amount ? e.final_payment_amount : 0;
+    return regular + balloon;
+  }
+  // Solo queda (o no) el mes balloon.
+  if (e.months_paid === e.months && e.has_final_payment && e.final_payment_amount) {
     return e.final_payment_amount;
   }
-  return e.monthly_amount;
-}
-
-export function calculateTotalMonthlyDue(
-  expenses: MSIExpense[],
-  loansGiven: LoanGiven[],
-  loansReceived: LoanReceived[]
-): number {
-  const activeExpenses = expenses
-    .filter((e) => e.months_paid < getMSITotalMonths(e))
-    .reduce((sum, e) => sum + getMSICurrentMonthAmount(e), 0);
-
-  const activeLoansGiven = loansGiven
-    .filter((l) => l.months_paid < l.total_months)
-    .reduce((sum, l) => sum + l.monthly_payment, 0);
-
-  const activeLoansReceived = loansReceived
-    .filter((l) => l.months_paid < l.total_months)
-    .reduce((sum, l) => sum + l.monthly_payment, 0);
-
-  return activeExpenses + activeLoansGiven + activeLoansReceived;
-}
-
-export function isExpenseActive(
-  _startDate: string,
-  months: number,
-  monthsPaid: number,
-  hasFinalPayment: boolean = false
-): boolean {
-  const total = hasFinalPayment ? months + 1 : months;
-  return monthsPaid < total;
+  return 0;
 }

@@ -5,7 +5,8 @@ import type { Card, MSIExpenseWithCard, LoanGiven, LoanReceived } from "@/types"
 import { fetchCards } from "@/lib/supabase/cards";
 import { fetchMSIExpenses } from "@/lib/supabase/msi";
 import { fetchLoansGiven, fetchLoansReceived } from "@/lib/supabase/loans";
-import { calculateTotalMonthlyDue } from "@/lib/utils/finance";
+import { calculateMonthlyProjection } from "@/lib/utils/projection";
+import { isMSIActive } from "@/lib/utils/finance";
 
 interface DashboardData {
   cards: Card[];
@@ -68,23 +69,23 @@ export function useDashboard(): DashboardData {
     load();
   }, [load]);
 
-  const activeMSI = msiExpenses.filter((e) => {
-    const total = e.has_final_payment ? e.months + 1 : e.months;
-    return e.months_paid < total;
-  });
+  const activeMSI = msiExpenses.filter(isMSIActive);
   const activeLoansGiven = loansGiven.filter((l) => l.months_paid < l.total_months);
   const activeLoansReceived = loansReceived.filter((l) => l.months_paid < l.total_months);
 
-  const msiTotal = activeMSI.reduce((sum, e) => {
-    if (e.has_final_payment && e.months_paid === e.months && e.final_payment_amount) {
-      return sum + e.final_payment_amount;
-    }
-    return sum + e.monthly_amount;
-  }, 0);
-  const loansGivenTotal = activeLoansGiven.reduce((sum, l) => sum + l.monthly_payment, 0);
-  const loansReceivedTotal = activeLoansReceived.reduce((sum, l) => sum + l.monthly_payment, 0);
-
-  const totalMonthly = calculateTotalMonthlyDue(msiExpenses, loansGiven, loansReceived);
+  // El total "a pagar este mes" sale del mismo cálculo que la proyección (mes
+  // actual), respetando start_date. Antes el dashboard sumaba TODOS los activos
+  // (ignorando start_date), por lo que discrepaba con la página de proyección.
+  const [currentMonth] = calculateMonthlyProjection(
+    msiExpenses,
+    loansGiven,
+    loansReceived,
+    1
+  );
+  const msiTotal = currentMonth?.msiTotal ?? 0;
+  const loansGivenTotal = currentMonth?.loansGivenTotal ?? 0;
+  const loansReceivedTotal = currentMonth?.loansReceivedTotal ?? 0;
+  const totalMonthly = currentMonth?.total ?? 0;
   const activeCount = activeMSI.length + activeLoansGiven.length + activeLoansReceived.length;
 
   return {
