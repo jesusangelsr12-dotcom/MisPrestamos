@@ -1,20 +1,13 @@
-import { createClient } from "@/lib/supabase/client";
-import type { MSIExpense, MSIExpenseWithCard, ExpenseOwner } from "@/types";
+"use server";
 
-export interface MSIInput {
-  card_id: string;
-  description: string;
-  total_amount: number;
-  months: number;
-  start_date: string;
-  owner: ExpenseOwner;
-  owner_name: string | null;
-  has_final_payment?: boolean;
-  final_payment_amount?: number | null;
-}
+import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAuth } from "@/lib/auth/requireAuth";
+import type { MSIExpense, MSIExpenseWithCard } from "@/types";
+import type { MSIInput } from "@/lib/supabase/types";
 
 export async function fetchMSIExpenses(): Promise<MSIExpenseWithCard[]> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("msi_expenses")
     .select("*, card:cards!card_id(name, bank, color, last_four)")
@@ -25,7 +18,8 @@ export async function fetchMSIExpenses(): Promise<MSIExpenseWithCard[]> {
 }
 
 export async function fetchMSIById(id: string): Promise<MSIExpenseWithCard | null> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("msi_expenses")
     .select("*, card:cards!card_id(name, bank, color, last_four)")
@@ -37,7 +31,8 @@ export async function fetchMSIById(id: string): Promise<MSIExpenseWithCard | nul
 }
 
 export async function insertMSI(input: MSIInput): Promise<MSIExpense> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const monthly_amount = input.total_amount / input.months;
 
   const { data, error } = await supabase
@@ -54,7 +49,8 @@ export async function updateMSIById(
   id: string,
   input: Partial<Omit<MSIInput, "card_id">>
 ): Promise<MSIExpense> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = { ...input };
 
@@ -93,7 +89,8 @@ export async function updateMSIById(
 }
 
 export async function deleteMSIById(id: string): Promise<void> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { error } = await supabase.from("msi_expenses").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
@@ -103,7 +100,8 @@ export async function markMSIMonthPaid(
   amount: number,
   monthsCovered: number = 1
 ): Promise<MSIExpense> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
 
   const { data: current, error: fetchError } = await supabase
     .from("msi_expenses")
@@ -152,7 +150,8 @@ export async function markMSIMonthPaid(
 }
 
 export async function fetchMSIPaymentTotals(): Promise<Record<string, number>> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .select("entity_id, amount")
@@ -160,9 +159,8 @@ export async function fetchMSIPaymentTotals(): Promise<Record<string, number>> {
 
   if (error) return {};
   const totals: Record<string, number> = {};
-  for (const row of (data ?? [])) {
+  for (const row of data ?? []) {
     totals[row.entity_id] = (totals[row.entity_id] ?? 0) + row.amount;
   }
   return totals;
 }
-

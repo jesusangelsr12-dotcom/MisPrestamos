@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { m } from "framer-motion";
 import type { LoanGiven, LoanReceived } from "@/types";
-import type { LoanType } from "@/lib/supabase/loans";
+import type { LoanType } from "@/lib/supabase/types";
 import { PaymentHistorySheet } from "@/components/features/PaymentHistorySheet";
 import { PaymentModal } from "@/components/features/PaymentModal";
 import { formatCurrency, getProgressColor } from "@/lib/utils/format";

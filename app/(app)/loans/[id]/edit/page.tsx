@@ -7,8 +7,8 @@ import { useLoans } from "@/lib/hooks/useLoans";
 import {
   fetchLoanGivenById,
   fetchLoanReceivedById,
-  type LoanType,
 } from "@/lib/supabase/loans";
+import type { LoanType } from "@/lib/supabase/types";
 import { formatCurrency } from "@/lib/utils/format";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];

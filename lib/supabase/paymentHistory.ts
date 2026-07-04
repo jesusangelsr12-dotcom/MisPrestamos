@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/client";
+"use server";
+
+import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAuth } from "@/lib/auth/requireAuth";
 import type { PaymentHistory, PaymentEntityType } from "@/types";
 
 export async function insertPaymentHistory(params: {
@@ -8,7 +11,8 @@ export async function insertPaymentHistory(params: {
   month_number: number;
   amount: number;
 }): Promise<PaymentHistory> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .insert(params)
@@ -22,7 +26,8 @@ export async function insertPaymentHistory(params: {
 export async function fetchHistoryByEntity(
   entityId: string
 ): Promise<PaymentHistory[]> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .select("*")
@@ -34,7 +39,8 @@ export async function fetchHistoryByEntity(
 }
 
 export async function fetchAllHistory(): Promise<PaymentHistory[]> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .select("*")

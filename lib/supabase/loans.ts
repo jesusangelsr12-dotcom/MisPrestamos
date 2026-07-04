@@ -1,28 +1,17 @@
-import { createClient } from "@/lib/supabase/client";
+"use server";
+
+import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAuth } from "@/lib/auth/requireAuth";
 import type { LoanGiven, LoanReceived } from "@/types";
-
-export type LoanType = "given" | "received";
-
-export interface LoanGivenInput {
-  borrower_name: string;
-  amount: number;
-  monthly_payment: number;
-  total_months: number;
-  start_date: string;
-  notes: string | null;
-}
-
-export interface LoanReceivedInput {
-  lender_name: string;
-  amount: number;
-  monthly_payment: number;
-  total_months: number;
-  start_date: string;
-  notes: string | null;
-}
+import type {
+  LoanType,
+  LoanGivenInput,
+  LoanReceivedInput,
+} from "@/lib/supabase/types";
 
 export async function fetchLoansGiven(): Promise<LoanGiven[]> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .select("*")
@@ -33,7 +22,8 @@ export async function fetchLoansGiven(): Promise<LoanGiven[]> {
 }
 
 export async function fetchLoansReceived(): Promise<LoanReceived[]> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .select("*")
@@ -44,7 +34,8 @@ export async function fetchLoansReceived(): Promise<LoanReceived[]> {
 }
 
 export async function fetchLoanGivenById(id: string): Promise<LoanGiven | null> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .select("*")
@@ -56,7 +47,8 @@ export async function fetchLoanGivenById(id: string): Promise<LoanGiven | null> 
 }
 
 export async function fetchLoanReceivedById(id: string): Promise<LoanReceived | null> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .select("*")
@@ -68,7 +60,8 @@ export async function fetchLoanReceivedById(id: string): Promise<LoanReceived | 
 }
 
 export async function insertLoanGiven(input: LoanGivenInput): Promise<LoanGiven> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_given")
     .insert(input)
@@ -80,7 +73,8 @@ export async function insertLoanGiven(input: LoanGivenInput): Promise<LoanGiven>
 }
 
 export async function insertLoanReceived(input: LoanReceivedInput): Promise<LoanReceived> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("loans_received")
     .insert(input)
@@ -94,7 +88,7 @@ export async function insertLoanReceived(input: LoanReceivedInput): Promise<Loan
 // Evita fijar total_months por debajo de los meses ya pagados (corrompería
 // progreso y montos derivados). Solo consulta si se está cambiando total_months.
 async function assertMonthsNotBelowPaid(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<typeof createAdminClient>,
   table: "loans_given" | "loans_received",
   id: string,
   nextTotalMonths: number | undefined
@@ -117,7 +111,8 @@ export async function updateLoanGivenById(
   id: string,
   input: Partial<LoanGivenInput>
 ): Promise<LoanGiven> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   await assertMonthsNotBelowPaid(supabase, "loans_given", id, input.total_months);
   const { data, error } = await supabase
     .from("loans_given")
@@ -134,7 +129,8 @@ export async function updateLoanReceivedById(
   id: string,
   input: Partial<LoanReceivedInput>
 ): Promise<LoanReceived> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   await assertMonthsNotBelowPaid(supabase, "loans_received", id, input.total_months);
   const { data, error } = await supabase
     .from("loans_received")
@@ -148,7 +144,8 @@ export async function updateLoanReceivedById(
 }
 
 export async function deleteLoanById(id: string, type: LoanType): Promise<void> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const table = type === "given" ? "loans_given" : "loans_received";
   const { error } = await supabase.from(table).delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -157,7 +154,8 @@ export async function deleteLoanById(id: string, type: LoanType): Promise<void> 
 export async function fetchLoanPaymentTotals(
   entityType: "loan_given" | "loan_received"
 ): Promise<Record<string, number>> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payment_history")
     .select("entity_id, amount")
@@ -177,7 +175,8 @@ export async function markLoanMonthPaid(
   amount: number,
   monthsCovered: number = 1
 ): Promise<LoanGiven | LoanReceived> {
-  const supabase = createClient();
+  await requireAuth();
+  const supabase = createAdminClient();
   const table = type === "given" ? "loans_given" : "loans_received";
   const nameCol = type === "given" ? "borrower_name" : "lender_name";
   const { data: current, error: fetchError } = await supabase

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { m } from "framer-motion";
 import { CardForm } from "@/components/features/CardForm";
 import { useCards } from "@/lib/hooks/useCards";
-import type { CardInput } from "@/lib/supabase/cards";
+import type { CardInput } from "@/lib/supabase/types";
 
 export default function NewCardPage() {
   const router = useRouter();

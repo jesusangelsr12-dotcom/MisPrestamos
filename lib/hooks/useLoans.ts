@@ -12,10 +12,12 @@ import {
   updateLoanReceivedById,
   deleteLoanById,
   markLoanMonthPaid,
-  type LoanType,
-  type LoanGivenInput,
-  type LoanReceivedInput,
 } from "@/lib/supabase/loans";
+import type {
+  LoanType,
+  LoanGivenInput,
+  LoanReceivedInput,
+} from "@/lib/supabase/types";
 
 interface UseLoansReturn {
   given: LoanGiven[];
