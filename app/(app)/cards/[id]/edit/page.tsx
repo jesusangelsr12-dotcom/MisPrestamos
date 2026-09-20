@@ -5,8 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CardForm } from "@/components/features/CardForm";
 import { useCards } from "@/lib/hooks/useCards";
-import { fetchCardById } from "@/lib/supabase/cards";
-import type { CardInput } from "@/lib/supabase/cards";
+import { fetchCardById } from "@/lib/db/cards";
+import type { CardInput } from "@/lib/db/cards";
 import type { Card } from "@/types";
 
 export default function EditCardPage() {

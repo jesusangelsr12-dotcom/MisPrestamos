@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { fetchPin } from "@/lib/db/queries";
 
 const verifySchema = z.object({
   pin: z.string().length(6).regex(/^\d{6}$/),
@@ -18,22 +18,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createClient();
+  const pin = await fetchPin();
 
-  const { data, error } = await supabase
-    .from("pin_auth")
-    .select("hashed_pin")
-    .limit(1)
-    .single();
-
-  if (error || !data) {
+  if (!pin) {
     return NextResponse.json(
       { error: "PIN no configurado" },
       { status: 404 }
     );
   }
 
-  const isValid = await bcrypt.compare(parsed.data.pin, data.hashed_pin);
+  const isValid = await bcrypt.compare(parsed.data.pin, pin.hashed_pin);
 
   if (!isValid) {
     return NextResponse.json(

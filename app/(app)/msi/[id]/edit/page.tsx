@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { z } from "zod";
-import { fetchMSIById } from "@/lib/supabase/msi";
+import { fetchMSIById } from "@/lib/db/msi";
 import { useMSI } from "@/lib/hooks/useMSI";
 import type { MSIExpenseWithCard, ExpenseOwner } from "@/types";
 

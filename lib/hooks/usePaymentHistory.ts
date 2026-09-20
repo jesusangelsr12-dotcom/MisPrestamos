@@ -5,7 +5,7 @@ import type { PaymentHistory } from "@/types";
 import {
   fetchHistoryByEntity,
   fetchAllHistory,
-} from "@/lib/supabase/paymentHistory";
+} from "@/lib/db/paymentHistory";
 
 interface UsePaymentHistoryReturn {
   history: PaymentHistory[];

@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Card, MSIExpenseWithCard, LoanGiven, LoanReceived } from "@/types";
-import { fetchCards } from "@/lib/supabase/cards";
-import { fetchMSIExpenses } from "@/lib/supabase/msi";
-import { fetchLoansGiven, fetchLoansReceived } from "@/lib/supabase/loans";
+import { fetchCards } from "@/lib/db/cards";
+import { fetchMSIExpenses } from "@/lib/db/msi";
+import { fetchLoansGiven, fetchLoansReceived } from "@/lib/db/loans";
 import { calculateTotalMonthlyDue } from "@/lib/utils/finance";
 
 interface DashboardData {

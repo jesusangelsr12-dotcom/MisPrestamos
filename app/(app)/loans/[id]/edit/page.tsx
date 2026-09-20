@@ -8,7 +8,7 @@ import {
   fetchLoanGivenById,
   fetchLoanReceivedById,
   type LoanType,
-} from "@/lib/supabase/loans";
+} from "@/lib/db/loans";
 
 const MONTHS_OPTIONS = [3, 6, 9, 12, 18, 24];
 

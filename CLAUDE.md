@@ -7,7 +7,7 @@ El objetivo es saber exactamente cuánto se paga por mes en compromisos financie
 
 ## Tech Stack
 - Next.js 14 (App Router, TypeScript estricto)
-- Supabase (PostgreSQL)
+- Neon (PostgreSQL serverless) vía `@neondatabase/serverless`
 - Tailwind CSS + shadcn/ui
 - Framer Motion
 - next-pwa (instalable en iOS)
@@ -34,7 +34,7 @@ El objetivo es saber exactamente cuánto se paga por mes en compromisos financie
 ## Architecture Rules
 - NUNCA lógica de negocio en componentes UI — usar hooks o server actions
 - SIEMPRE TypeScript strict, sin `any`
-- Todas las queries a Supabase van en `/lib/supabase/`
+- Todas las queries a Neon van en `/lib/db/` (SQL vía `sql.query()`, expuestas como server actions con `"use server"` cuando las consumen componentes cliente)
 - Componentes en `/components/`, páginas en `/app/`
 - Validación con Zod en formularios y API routes
 - Optimistic updates en todas las acciones de usuario
@@ -51,13 +51,13 @@ El objetivo es saber exactamente cuánto se paga por mes en compromisos financie
   /ui          ← shadcn components
   /features    ← domain components
 /lib
-  /supabase    ← client.ts, server.ts, queries
+  /db          ← client.ts (Neon sql client), cards.ts, msi.ts, loans.ts, paymentHistory.ts, queries.ts
   /hooks       ← custom hooks
   /utils       ← finance.ts, helpers
 /types
   index.ts
-/supabase
-  /migrations
+/db
+  /migrations  ← historial de schema SQL (aplicado sobre Neon)
 
 ## Data Models
 

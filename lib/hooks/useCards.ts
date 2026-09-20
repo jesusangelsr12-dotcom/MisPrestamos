@@ -8,7 +8,7 @@ import {
   updateCardById,
   deleteCardById,
   type CardInput,
-} from "@/lib/supabase/cards";
+} from "@/lib/db/cards";
 
 interface UseCardsReturn {
   cards: Card[];

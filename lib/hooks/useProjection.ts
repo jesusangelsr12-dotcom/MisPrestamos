@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { fetchMSIExpenses } from "@/lib/supabase/msi";
-import { fetchLoansGiven, fetchLoansReceived } from "@/lib/supabase/loans";
+import { fetchMSIExpenses } from "@/lib/db/msi";
+import { fetchLoansGiven, fetchLoansReceived } from "@/lib/db/loans";
 import {
   calculateMonthlyProjection,
   type MonthProjection,

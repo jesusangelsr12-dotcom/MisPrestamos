@@ -9,7 +9,7 @@ import {
   deleteMSIById,
   markMSIMonthPaid,
   type MSIInput,
-} from "@/lib/supabase/msi";
+} from "@/lib/db/msi";
 
 interface UseMSIReturn {
   expenses: MSIExpenseWithCard[];

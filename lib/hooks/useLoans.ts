@@ -14,7 +14,7 @@ import {
   type LoanType,
   type LoanGivenInput,
   type LoanReceivedInput,
-} from "@/lib/supabase/loans";
+} from "@/lib/db/loans";
 
 interface UseLoansReturn {
   given: LoanGiven[];
