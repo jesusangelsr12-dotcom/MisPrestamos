@@ -123,3 +123,23 @@ export function getBillingPeriodByOffset(
   const periodEndYM = addMonths(baseEndYM, offset);
   return buildPeriod(cutOffDay, paymentDueDay, periodEndYM);
 }
+
+// Mes calendario (día 1 al último día del mes) desplazado `offset` meses
+// respecto al mes de `referenceDate`. Se usa como "periodo" para cuentas sin
+// fecha de corte (efectivo, ahorro, inversión, otros), que no tienen un
+// concepto de saldo a pagar — solo agrupan movimientos por mes.
+export function getCalendarMonthPeriod(referenceDate: Date, offset: number): BillingPeriod {
+  const ym = addMonths({ year: referenceDate.getFullYear(), month: referenceDate.getMonth() + 1 }, offset);
+  const start = new Date(ym.year, ym.month - 1, 1);
+  const end = clampedDate(ym.year, ym.month, daysInMonth(ym.year, ym.month));
+  return { start: formatYMD(start), end: formatYMD(end), dueDate: "" };
+}
+
+// Cuántos ciclos (meses) separan el mes del `end` de un periodo del `end` de
+// otro. Sirve para comparar offsets de periodos distintos sin recalcularlos
+// desde cero (ej. saber a qué offset corresponde la fecha de creación de una cuenta).
+export function periodMonthsBetween(periodEndA: string, periodEndB: string): number {
+  const [ay, am] = periodEndA.split("-").map(Number);
+  const [by, bm] = periodEndB.split("-").map(Number);
+  return by * 12 + bm - (ay * 12 + am);
+}

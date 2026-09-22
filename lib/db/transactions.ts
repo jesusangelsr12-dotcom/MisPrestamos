@@ -71,6 +71,35 @@ export async function fetchTransactionsForAccountPeriod(
   return rows as TransactionWithRelations[];
 }
 
+// Movimientos donde la cuenta participa en cualquier dirección (destino u
+// origen), usado para el detalle de cuentas que no son tarjeta de crédito.
+export async function fetchTransactionsForAccountRangeAnyDirection(
+  accountId: string,
+  startDate: string,
+  endDate: string
+): Promise<TransactionWithRelations[]> {
+  const rows = await sql.query(
+    `${WITH_RELATIONS_SELECT}
+     where (t.account_id = $1 or t.source_account_id = $1) and t.date between $2 and $3
+     order by t.date desc, t.created_at desc`,
+    [accountId, startDate, endDate]
+  );
+  return rows as TransactionWithRelations[];
+}
+
+// Todos los gastos históricos de una tarjeta (sin límite de fecha): se
+// necesitan para saber si una compra a MSI de hace varios cortes todavía
+// tiene una cuota pendiente en el periodo que se está mostrando.
+export async function fetchExpenseTransactionsForAccount(
+  accountId: string
+): Promise<TransactionWithRelations[]> {
+  const rows = await sql.query(
+    `${WITH_RELATIONS_SELECT} where t.account_id = $1 and t.type = 'expense' order by t.date asc`,
+    [accountId]
+  );
+  return rows as TransactionWithRelations[];
+}
+
 export async function fetchTransactionById(id: string): Promise<TransactionWithRelations | null> {
   const rows = await sql.query(`${WITH_RELATIONS_SELECT} where t.id = $1 limit 1`, [id]);
   return (rows[0] as TransactionWithRelations) ?? null;

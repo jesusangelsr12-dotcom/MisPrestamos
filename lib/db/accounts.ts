@@ -1,7 +1,7 @@
 "use server";
 
 import { sql, buildUpdate } from "@/lib/db/client";
-import type { Account, AccountType } from "@/types";
+import type { Account } from "@/types";
 
 export type AccountInput = Omit<Account, "id" | "created_at">;
 
@@ -63,8 +63,4 @@ export async function deleteAccountById(id: string): Promise<void> {
   }
 
   await sql.query(`delete from accounts where id = $1`, [id]);
-}
-
-export function isCreditCard(type: AccountType): boolean {
-  return type === "credit_card";
 }

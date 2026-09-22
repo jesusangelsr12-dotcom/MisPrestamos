@@ -44,6 +44,15 @@ export function calculateTotalMonthlyDue(
   return activeExpenses + activeLoansGiven + activeLoansReceived;
 }
 
+export function formatCurrency(amount: number): string {
+  return amount.toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+}
+
 export function isExpenseActive(
   _startDate: string,
   months: number,
