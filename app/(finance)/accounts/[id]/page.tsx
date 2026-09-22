@@ -7,6 +7,7 @@ import { AccountTypeIcon, ACCOUNT_TYPE_LABELS } from "@/components/features/Acco
 import { PeriodNav } from "@/components/features/PeriodNav";
 import { TransactionListItem } from "@/components/features/TransactionListItem";
 import { FinanceBottomNav } from "@/components/features/FinanceBottomNav";
+import { TransactionFAB } from "@/components/features/TransactionFAB";
 import { formatCurrency } from "@/lib/utils/finance";
 
 export default function AccountDetailPage() {
@@ -80,6 +81,8 @@ export default function AccountDetailPage() {
           )}
         </div>
       </motion.div>
+
+      {isCreditCard && <TransactionFAB cardAccount={account} onCreated={refresh} />}
 
       <FinanceBottomNav />
     </main>
