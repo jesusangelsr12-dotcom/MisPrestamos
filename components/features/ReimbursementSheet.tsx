@@ -8,6 +8,7 @@ import {
   insertReimbursement,
   deleteReimbursementById,
 } from "@/lib/db/reimbursements";
+import { revalidateFinanceData } from "@/lib/swr/finance";
 import type { Reimbursement } from "@/types";
 
 const todayYMD = () => new Date().toISOString().slice(0, 10);
@@ -73,6 +74,7 @@ export function ReimbursementSheet({ isOpen, onClose, expenseId, personName, tot
       setAmount("");
       setNote("");
       await load();
+      await revalidateFinanceData();
       onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
@@ -85,6 +87,7 @@ export function ReimbursementSheet({ isOpen, onClose, expenseId, personName, tot
     try {
       await deleteReimbursementById(id);
       await load();
+      await revalidateFinanceData();
       onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al eliminar");

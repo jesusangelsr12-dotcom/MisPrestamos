@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import useSWR from "swr";
 import type { Account } from "@/types";
 import { fetchAccounts } from "@/lib/db/accounts";
 import { fetchExpenseTransactionsForAccount, fetchTransactionsForAccountPeriod } from "@/lib/db/transactions";
 import { getBillingPeriodByOffset } from "@/lib/utils/cardPeriods";
 import { calculatePeriodBalance } from "@/lib/utils/accountBalance";
+import { swrKeys } from "@/lib/swr/finance";
 
 export interface UpcomingDuePayment {
   accountId: string;
@@ -31,6 +32,11 @@ interface UseHomeAccountsReturn {
 interface AccountPeriodData {
   periodTotals: [number, number, number] | null;
   duePayment: UpcomingDuePayment | null;
+}
+
+interface HomeAccountsData {
+  accounts: AccountWithPeriods[];
+  upcomingDuePayments: UpcomingDuePayment[];
 }
 
 async function loadAccountPeriodData(account: Account): Promise<AccountPeriodData> {
@@ -73,45 +79,37 @@ async function loadAccountPeriodData(account: Account): Promise<AccountPeriodDat
   };
 }
 
+async function fetchHomeAccountsData(): Promise<HomeAccountsData> {
+  const list = await fetchAccounts();
+  const withData = await Promise.all(
+    list.map(async (account) => ({ account, data: await loadAccountPeriodData(account) }))
+  );
+
+  const accounts = withData.map(({ account, data }) => ({ ...account, periodTotals: data.periodTotals }));
+
+  const DUE_SOON_DAYS = 7;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + DUE_SOON_DAYS);
+  const cutoffYMD = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
+
+  const upcomingDuePayments = withData
+    .map(({ data }) => data.duePayment)
+    .filter((d): d is UpcomingDuePayment => d !== null && d.dueDate <= cutoffYMD)
+    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+  return { accounts, upcomingDuePayments };
+}
+
 export function useHomeAccounts(): UseHomeAccountsReturn {
-  const [accounts, setAccounts] = useState<AccountWithPeriods[]>([]);
-  const [upcomingDuePayments, setUpcomingDuePayments] = useState<UpcomingDuePayment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading, mutate } = useSWR<HomeAccountsData>(swrKeys.homeAccounts, fetchHomeAccountsData);
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const list = await fetchAccounts();
-      const withData = await Promise.all(
-        list.map(async (account) => ({ account, data: await loadAccountPeriodData(account) }))
-      );
-
-      setAccounts(withData.map(({ account, data }) => ({ ...account, periodTotals: data.periodTotals })));
-
-      const DUE_SOON_DAYS = 7;
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() + DUE_SOON_DAYS);
-      const cutoffYMD = `${cutoff.getFullYear()}-${String(cutoff.getMonth() + 1).padStart(2, "0")}-${String(cutoff.getDate()).padStart(2, "0")}`;
-
-      const dueSoon = withData
-        .map(({ data }) => data.duePayment)
-        .filter((d): d is UpcomingDuePayment => d !== null && d.dueDate <= cutoffYMD)
-        .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-      setUpcomingDuePayments(dueSoon);
-    } catch (err) {
-      console.error("[useHomeAccounts] Error:", err);
-      setError(err instanceof Error ? err.message : "Error al cargar cuentas");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { accounts, upcomingDuePayments, loading, error, refresh: load };
+  return {
+    accounts: data?.accounts ?? [],
+    upcomingDuePayments: data?.upcomingDuePayments ?? [],
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error al cargar cuentas") : null,
+    refresh: async () => {
+      await mutate();
+    },
+  };
 }

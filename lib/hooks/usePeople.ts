@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import useSWR from "swr";
 import type { Person } from "@/types";
 import { fetchPeople, insertPerson, deletePersonById } from "@/lib/db/people";
+import { swrKeys } from "@/lib/swr/finance";
 
 interface UsePeopleReturn {
   people: Person[];
@@ -12,34 +13,34 @@ interface UsePeopleReturn {
 }
 
 export function usePeople(): UsePeopleReturn {
-  const [people, setPeople] = useState<Person[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, mutate } = useSWR<Person[]>(swrKeys.people, fetchPeople);
+  const people = data ?? [];
 
-  useEffect(() => {
-    fetchPeople()
-      .then(setPeople)
-      .catch((err) => console.error("[usePeople] Error:", err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const createPerson = useCallback(async (name: string): Promise<Person> => {
+  async function createPerson(name: string): Promise<Person> {
     const created = await insertPerson(name);
-    setPeople((prev) =>
-      prev.some((p) => p.id === created.id) ? prev : [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    await mutate(
+      (prev) =>
+        prev?.some((p) => p.id === created.id)
+          ? prev
+          : [...(prev ?? []), created].sort((a, b) => a.name.localeCompare(b.name)),
+      { revalidate: false }
     );
     return created;
-  }, []);
+  }
 
-  const deletePerson = useCallback(async (id: string): Promise<void> => {
+  async function deletePerson(id: string): Promise<void> {
     const previous = people;
-    setPeople((prev) => prev.filter((p) => p.id !== id));
+    await mutate(
+      people.filter((p) => p.id !== id),
+      { revalidate: false }
+    );
     try {
       await deletePersonById(id);
     } catch (err) {
-      setPeople(previous);
+      await mutate(previous, { revalidate: false });
       throw err;
     }
-  }, [people]);
+  }
 
-  return { people, loading, createPerson, deletePerson };
+  return { people, loading: isLoading, createPerson, deletePerson };
 }

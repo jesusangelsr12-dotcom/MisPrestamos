@@ -8,6 +8,7 @@ import { ExpenseFormSheet } from "@/components/features/ExpenseFormSheet";
 import { PaymentFormSheet } from "@/components/features/PaymentFormSheet";
 import { TransferFormSheet } from "@/components/features/TransferFormSheet";
 import { insertTransaction, type TransactionInput } from "@/lib/db/transactions";
+import { revalidateFinanceData } from "@/lib/swr/finance";
 import type { Account } from "@/types";
 
 type ActiveForm = "expense" | "payment" | "transfer" | null;
@@ -23,6 +24,7 @@ export function TransactionFAB({ cardAccount, onCreated }: TransactionFABProps) 
 
   async function handleSubmit(input: TransactionInput) {
     await insertTransaction(input);
+    await revalidateFinanceData();
     onCreated();
   }
 

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import useSWR from "swr";
 import type { Category } from "@/types";
 import { fetchCategories, insertCategory, deleteCategoryById } from "@/lib/db/categories";
+import { swrKeys } from "@/lib/swr/finance";
 
 interface UseCategoriesReturn {
   categories: Category[];
@@ -12,34 +13,34 @@ interface UseCategoriesReturn {
 }
 
 export function useCategories(): UseCategoriesReturn {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, mutate } = useSWR<Category[]>(swrKeys.categories, fetchCategories);
+  const categories = data ?? [];
 
-  useEffect(() => {
-    fetchCategories()
-      .then(setCategories)
-      .catch((err) => console.error("[useCategories] Error:", err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const createCategory = useCallback(async (name: string): Promise<Category> => {
+  async function createCategory(name: string): Promise<Category> {
     const created = await insertCategory(name);
-    setCategories((prev) =>
-      prev.some((c) => c.id === created.id) ? prev : [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    await mutate(
+      (prev) =>
+        prev?.some((c) => c.id === created.id)
+          ? prev
+          : [...(prev ?? []), created].sort((a, b) => a.name.localeCompare(b.name)),
+      { revalidate: false }
     );
     return created;
-  }, []);
+  }
 
-  const deleteCategory = useCallback(async (id: string): Promise<void> => {
+  async function deleteCategory(id: string): Promise<void> {
     const previous = categories;
-    setCategories((prev) => prev.filter((c) => c.id !== id));
+    await mutate(
+      categories.filter((c) => c.id !== id),
+      { revalidate: false }
+    );
     try {
       await deleteCategoryById(id);
     } catch (err) {
-      setCategories(previous);
+      await mutate(previous, { revalidate: false });
       throw err;
     }
-  }, [categories]);
+  }
 
-  return { categories, loading, createCategory, deleteCategory };
+  return { categories, loading: isLoading, createCategory, deleteCategory };
 }

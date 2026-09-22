@@ -14,6 +14,7 @@ import { TransactionFAB } from "@/components/features/TransactionFAB";
 import { formatCurrency } from "@/lib/utils/finance";
 import { deleteAccountById } from "@/lib/db/accounts";
 import { updateTransactionById, deleteTransactionById } from "@/lib/db/transactions";
+import { revalidateFinanceData } from "@/lib/swr/finance";
 import type { TransactionWithRelations } from "@/types";
 
 export default function AccountDetailPage() {
@@ -173,10 +174,12 @@ export default function AccountDetailPage() {
         onSave={async (id, updates) => {
           await updateTransactionById(id, updates);
           await refresh();
+          await revalidateFinanceData();
         }}
         onDelete={async (id) => {
           await deleteTransactionById(id);
           await refresh();
+          await revalidateFinanceData();
         }}
       />
 

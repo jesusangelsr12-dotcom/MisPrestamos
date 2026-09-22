@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import type { Account, TransactionWithRelations } from "@/types";
 import { fetchAccountById } from "@/lib/db/accounts";
 import {
@@ -16,6 +17,7 @@ import {
   type BillingPeriod,
 } from "@/lib/utils/cardPeriods";
 import { calculatePeriodBalance, getMaxForwardOffset, type PeriodLineItem } from "@/lib/utils/accountBalance";
+import { swrKeys } from "@/lib/swr/finance";
 
 interface AccountDetailState {
   account: Account | null;
@@ -33,6 +35,15 @@ interface AccountDetailState {
   refresh: () => Promise<void>;
 }
 
+interface AccountDetailData {
+  account: Account;
+  period: BillingPeriod;
+  isCreditCard: boolean;
+  items: PeriodLineItem[];
+  minOffset: number;
+  maxOffset: number;
+}
+
 function netMovement(accountId: string, transactions: TransactionWithRelations[]): PeriodLineItem[] {
   return transactions.map((t) => {
     let amount = 0;
@@ -44,99 +55,73 @@ function netMovement(accountId: string, transactions: TransactionWithRelations[]
   });
 }
 
-export function useAccountDetail(accountId: string): AccountDetailState {
-  const [account, setAccount] = useState<Account | null>(null);
-  const [offset, setOffset] = useState(0);
-  const [items, setItems] = useState<PeriodLineItem[]>([]);
-  const [minOffset, setMinOffset] = useState<number>(-1200);
-  const [maxOffset, setMaxOffset] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+async function fetchAccountDetailData(accountId: string, offset: number): Promise<AccountDetailData> {
+  const acc = await fetchAccountById(accountId);
+  if (!acc) throw new Error("Cuenta no encontrada");
 
-  const isCreditCard =
-    account?.type === "credit_card" && account.cut_off_day != null && account.payment_due_day != null;
+  const today = new Date();
+  const createdAt = parseYMD(acc.created_at.slice(0, 10));
+  const isCreditCard = acc.type === "credit_card" && acc.cut_off_day != null && acc.payment_due_day != null;
 
-  const period = useMemo<BillingPeriod | null>(() => {
-    if (!account) return null;
-    const today = new Date();
-    return isCreditCard
-      ? getBillingPeriodByOffset(account.cut_off_day!, account.payment_due_day!, today, offset)
-      : getCalendarMonthPeriod(today, offset);
-  }, [account, isCreditCard, offset]);
+  if (isCreditCard) {
+    const cutOffDay = acc.cut_off_day!;
+    const paymentDueDay = acc.payment_due_day!;
+    const todayPeriod = getBillingPeriodByOffset(cutOffDay, paymentDueDay, today, 0);
+    const createdPeriod = getBillingPeriodByOffset(cutOffDay, paymentDueDay, createdAt, 0);
+    const minOffset = periodMonthsBetween(todayPeriod.end, createdPeriod.end);
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    const allExpenses = await fetchExpenseTransactionsForAccount(accountId);
+    const maxOffset = getMaxForwardOffset(cutOffDay, paymentDueDay, today, allExpenses);
 
-      const acc = await fetchAccountById(accountId);
-      if (!acc) throw new Error("Cuenta no encontrada");
-      setAccount(acc);
+    const currentPeriod = getBillingPeriodByOffset(cutOffDay, paymentDueDay, today, offset);
+    const rangeTransactions = await fetchTransactionsForAccountPeriod(accountId, currentPeriod.start, currentPeriod.end);
+    const periodPayments = rangeTransactions.filter((t) => t.type === "payment");
+    const balance = calculatePeriodBalance(cutOffDay, paymentDueDay, currentPeriod, allExpenses, periodPayments);
 
-      const today = new Date();
-      const createdAt = parseYMD(acc.created_at.slice(0, 10));
-      const accIsCard = acc.type === "credit_card" && acc.cut_off_day != null && acc.payment_due_day != null;
+    return { account: acc, period: currentPeriod, isCreditCard, items: balance.items, minOffset, maxOffset };
+  }
 
-      if (accIsCard) {
-        const cutOffDay = acc.cut_off_day!;
-        const paymentDueDay = acc.payment_due_day!;
-        const todayPeriod = getBillingPeriodByOffset(cutOffDay, paymentDueDay, today, 0);
-        const createdPeriod = getBillingPeriodByOffset(cutOffDay, paymentDueDay, createdAt, 0);
-        setMinOffset(periodMonthsBetween(todayPeriod.end, createdPeriod.end));
+  const todayMonth = getCalendarMonthPeriod(today, 0);
+  const createdMonth = getCalendarMonthPeriod(createdAt, 0);
+  const minOffset = periodMonthsBetween(todayMonth.end, createdMonth.end);
 
-        const allExpenses = await fetchExpenseTransactionsForAccount(accountId);
-        setMaxOffset(getMaxForwardOffset(cutOffDay, paymentDueDay, today, allExpenses));
-
-        const currentPeriod = getBillingPeriodByOffset(cutOffDay, paymentDueDay, today, offset);
-        const rangeTransactions = await fetchTransactionsForAccountPeriod(
-          accountId,
-          currentPeriod.start,
-          currentPeriod.end
-        );
-        const periodPayments = rangeTransactions.filter((t) => t.type === "payment");
-        const balance = calculatePeriodBalance(cutOffDay, paymentDueDay, currentPeriod, allExpenses, periodPayments);
-        setItems(balance.items);
-      } else {
-        const todayMonth = getCalendarMonthPeriod(today, 0);
-        const createdMonth = getCalendarMonthPeriod(createdAt, 0);
-        setMinOffset(periodMonthsBetween(todayMonth.end, createdMonth.end));
-        setMaxOffset(0);
-
-        const currentPeriod = getCalendarMonthPeriod(today, offset);
-        const transactions = await fetchTransactionsForAccountRangeAnyDirection(
-          accountId,
-          currentPeriod.start,
-          currentPeriod.end
-        );
-        setItems(netMovement(accountId, transactions));
-      }
-    } catch (err) {
-      console.error("[useAccountDetail] Error:", err);
-      setError(err instanceof Error ? err.message : "Error al cargar la cuenta");
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId, offset]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const total = items.reduce((sum, item) => sum + item.amount, 0);
+  const currentPeriod = getCalendarMonthPeriod(today, offset);
+  const transactions = await fetchTransactionsForAccountRangeAnyDirection(accountId, currentPeriod.start, currentPeriod.end);
 
   return {
-    account,
-    period,
+    account: acc,
+    period: currentPeriod,
     isCreditCard,
-    items,
+    items: netMovement(accountId, transactions),
+    minOffset,
+    maxOffset: 0,
+  };
+}
+
+export function useAccountDetail(accountId: string): AccountDetailState {
+  const [offset, setOffset] = useState(0);
+  const { data, error, isLoading, mutate } = useSWR(
+    swrKeys.accountDetail(accountId, offset),
+    () => fetchAccountDetailData(accountId, offset)
+  );
+
+  const total = (data?.items ?? []).reduce((sum, item) => sum + item.amount, 0);
+
+  return {
+    account: data?.account ?? null,
+    period: data?.period ?? null,
+    isCreditCard: data?.isCreditCard ?? false,
+    items: data?.items ?? [],
     total,
     offset,
-    canGoBack: offset > minOffset,
-    canGoForward: offset < maxOffset,
+    canGoBack: offset > (data?.minOffset ?? -1200),
+    canGoForward: offset < (data?.maxOffset ?? 0),
     goBack: () => setOffset((o) => o - 1),
     goForward: () => setOffset((o) => o + 1),
-    loading,
-    error,
-    refresh: load,
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error al cargar la cuenta") : null,
+    refresh: async () => {
+      await mutate();
+    },
   };
 }

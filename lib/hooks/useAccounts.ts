@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import useSWR from "swr";
 import type { Account } from "@/types";
 import {
   fetchAccounts,
@@ -9,6 +9,7 @@ import {
   deleteAccountById,
   type AccountInput,
 } from "@/lib/db/accounts";
+import { swrKeys, revalidateFinanceData } from "@/lib/swr/finance";
 
 interface UseAccountsReturn {
   accounts: Account[];
@@ -21,87 +22,60 @@ interface UseAccountsReturn {
 }
 
 export function useAccounts(): UseAccountsReturn {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading, mutate } = useSWR<Account[]>(swrKeys.accounts, fetchAccounts);
+  const accounts = data ?? [];
 
-  const loadAccounts = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Tiempo de espera agotado")), 5000)
-      );
-
-      const data = await Promise.race([fetchAccounts(), timeout]);
-      setAccounts(data);
-    } catch (err) {
-      console.error("[useAccounts] Error loading accounts:", err);
-      setError(err instanceof Error ? err.message : "Error al cargar cuentas");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadAccounts();
-  }, [loadAccounts]);
-
-  const createAccount = useCallback(async (data: AccountInput): Promise<Account> => {
+  async function createAccount(input: AccountInput): Promise<Account> {
     const tempId = `temp-${Date.now()}`;
-    const optimistic: Account = { ...data, id: tempId, created_at: new Date().toISOString() };
-    setAccounts((prev) => [optimistic, ...prev]);
+    const optimistic: Account = { ...input, id: tempId, created_at: new Date().toISOString() };
+    await mutate((prev) => [optimistic, ...(prev ?? [])], { revalidate: false });
 
     try {
-      const created = await insertAccount(data);
-      setAccounts((prev) => prev.map((a) => (a.id === tempId ? created : a)));
+      const created = await insertAccount(input);
+      await mutate((prev) => (prev ?? []).map((a) => (a.id === tempId ? created : a)), { revalidate: false });
+      await revalidateFinanceData();
       return created;
     } catch (err) {
-      setAccounts((prev) => prev.filter((a) => a.id !== tempId));
+      await mutate((prev) => (prev ?? []).filter((a) => a.id !== tempId), { revalidate: false });
       throw err;
     }
-  }, []);
+  }
 
-  const updateAccount = useCallback(
-    async (id: string, data: Partial<AccountInput>): Promise<Account> => {
-      const previous = accounts.find((a) => a.id === id);
-      setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, ...data } : a)));
+  async function updateAccount(id: string, input: Partial<AccountInput>): Promise<Account> {
+    await mutate((prev) => (prev ?? []).map((a) => (a.id === id ? { ...a, ...input } : a)), { revalidate: false });
 
-      try {
-        const updated = await updateAccountById(id, data);
-        setAccounts((prev) => prev.map((a) => (a.id === id ? updated : a)));
-        return updated;
-      } catch (err) {
-        if (previous) setAccounts((prev) => prev.map((a) => (a.id === id ? previous : a)));
-        throw err;
-      }
-    },
-    [accounts]
-  );
+    try {
+      const updated = await updateAccountById(id, input);
+      await mutate((prev) => (prev ?? []).map((a) => (a.id === id ? updated : a)), { revalidate: false });
+      await revalidateFinanceData();
+      return updated;
+    } catch (err) {
+      await mutate();
+      throw err;
+    }
+  }
 
-  const deleteAccount = useCallback(
-    async (id: string): Promise<void> => {
-      const previous = accounts.find((a) => a.id === id);
-      setAccounts((prev) => prev.filter((a) => a.id !== id));
+  async function deleteAccount(id: string): Promise<void> {
+    await mutate((prev) => (prev ?? []).filter((a) => a.id !== id), { revalidate: false });
 
-      try {
-        await deleteAccountById(id);
-      } catch (err) {
-        if (previous) setAccounts((prev) => [previous, ...prev]);
-        throw err;
-      }
-    },
-    [accounts]
-  );
+    try {
+      await deleteAccountById(id);
+      await revalidateFinanceData();
+    } catch (err) {
+      await mutate();
+      throw err;
+    }
+  }
 
   return {
     accounts,
-    loading,
-    error,
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error al cargar cuentas") : null,
     createAccount,
     updateAccount,
     deleteAccount,
-    refresh: loadAccounts,
+    refresh: async () => {
+      await mutate();
+    },
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import useSWR from "swr";
 import type { Account, Person, TransactionWithRelations } from "@/types";
 import { fetchAccounts } from "@/lib/db/accounts";
 import { fetchExpenseTransactionsForAccount } from "@/lib/db/transactions";
@@ -8,6 +8,7 @@ import { fetchPeople } from "@/lib/db/people";
 import { fetchReimbursementTotals } from "@/lib/db/reimbursements";
 import { getBillingPeriodByOffset } from "@/lib/utils/cardPeriods";
 import { calculatePeriodBalance, getMaxForwardOffset, type PeriodLineItem } from "@/lib/utils/accountBalance";
+import { swrKeys } from "@/lib/swr/finance";
 
 function filterMsi(expenses: TransactionWithRelations[]): TransactionWithRelations[] {
   return expenses.filter((e) => e.msi_months > 0);
@@ -37,66 +38,53 @@ interface UseMSIExpensesByCardReturn {
   refresh: () => Promise<void>;
 }
 
+interface MSIExpensesData {
+  creditCards: Account[];
+  expensesByAccount: Record<string, TransactionWithRelations[]>;
+  people: Person[];
+  reimbursedTotals: Record<string, number>;
+}
+
 function periodLabel(offset: number): string {
   if (offset === 0) return "Corte actual";
   if (offset === 1) return "Siguiente";
   return `+${offset} cortes`;
 }
 
+async function fetchMSIExpensesData(): Promise<MSIExpensesData> {
+  const [allAccounts, peopleList] = await Promise.all([fetchAccounts(), fetchPeople()]);
+
+  const creditCards = allAccounts.filter(
+    (a) => a.type === "credit_card" && a.cut_off_day != null && a.payment_due_day != null
+  );
+
+  const expensesPerAccount = await Promise.all(
+    creditCards.map((account) => fetchExpenseTransactionsForAccount(account.id))
+  );
+  const expensesByAccount: Record<string, TransactionWithRelations[]> = {};
+  creditCards.forEach((account, i) => {
+    expensesByAccount[account.id] = filterMsi(expensesPerAccount[i]);
+  });
+
+  const notMineExpenseIds = Object.values(expensesByAccount)
+    .flat()
+    .filter((e) => e.person_id !== null)
+    .map((e) => e.id);
+  const reimbursedTotals = await fetchReimbursementTotals(notMineExpenseIds);
+
+  return { creditCards, expensesByAccount, people: peopleList, reimbursedTotals };
+}
+
 export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpensesByCardReturn {
-  const [accounts, setAccounts] = useState<Account[]>([]);
-  const [expensesByAccount, setExpensesByAccount] = useState<Record<string, TransactionWithRelations[]>>({});
-  const [people, setPeople] = useState<Person[]>([]);
-  const [reimbursedTotals, setReimbursedTotals] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [allAccounts, peopleList] = await Promise.all([fetchAccounts(), fetchPeople()]);
-      setPeople(peopleList);
-
-      const creditCards = allAccounts.filter(
-        (a) => a.type === "credit_card" && a.cut_off_day != null && a.payment_due_day != null
-      );
-      setAccounts(creditCards);
-
-      const expensesPerAccount = await Promise.all(
-        creditCards.map((account) => fetchExpenseTransactionsForAccount(account.id))
-      );
-      const perAccount: Record<string, TransactionWithRelations[]> = {};
-      creditCards.forEach((account, i) => {
-        perAccount[account.id] = filterMsi(expensesPerAccount[i]);
-      });
-      setExpensesByAccount(perAccount);
-
-      const notMineExpenseIds = Object.values(perAccount)
-        .flat()
-        .filter((e) => e.person_id !== null)
-        .map((e) => e.id);
-      setReimbursedTotals(await fetchReimbursementTotals(notMineExpenseIds));
-    } catch (err) {
-      console.error("[useMSIExpensesByCard] Error:", err);
-      setError(err instanceof Error ? err.message : "Error al cargar gastos MSI");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { data, error, isLoading, mutate } = useSWR<MSIExpensesData>(swrKeys.msiExpensesData, fetchMSIExpensesData);
 
   const today = new Date();
   const groups: CardMSIGroup[] = [];
 
-  for (const account of accounts) {
+  for (const account of data?.creditCards ?? []) {
     const cutOffDay = account.cut_off_day!;
     const paymentDueDay = account.payment_due_day!;
-    const allExpenses = (expensesByAccount[account.id] ?? []).filter(
+    const allExpenses = (data?.expensesByAccount[account.id] ?? []).filter(
       (e) => personFilter === "all" || e.person_id === personFilter
     );
     if (allExpenses.length === 0) continue;
@@ -115,5 +103,14 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
     groups.push({ account, periodTotals, currentItems });
   }
 
-  return { groups, people, reimbursedTotals, loading, error, refresh: load };
+  return {
+    groups,
+    people: data?.people ?? [],
+    reimbursedTotals: data?.reimbursedTotals ?? {},
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Error al cargar gastos MSI") : null,
+    refresh: async () => {
+      await mutate();
+    },
+  };
 }
