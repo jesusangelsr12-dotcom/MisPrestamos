@@ -110,18 +110,41 @@ export function ReimbursementSheet({ isOpen, onClose, expenseId, personName, tot
 
         <div className="flex flex-col gap-3">
           <span className="text-[13px] font-medium text-[#1A1A1A]">Registrar pago recibido</span>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="$0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-              className={`${inputCls} font-mono flex-1`}
-            />
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${inputCls} w-[150px]`} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="reimbursementAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
+                Monto recibido
+              </label>
+              <input
+                id="reimbursementAmount"
+                type="text"
+                inputMode="decimal"
+                placeholder="$0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                className={`${inputCls} font-mono`}
+              />
+            </div>
+            <div>
+              <label htmlFor="reimbursementDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
+                Fecha
+              </label>
+              <input id="reimbursementDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+            </div>
           </div>
-          <input type="text" placeholder="Nota (opcional)" value={note} onChange={(e) => setNote(e.target.value)} className={inputCls} />
+          <div>
+            <label htmlFor="reimbursementNote" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">
+              Nota (opcional)
+            </label>
+            <input
+              id="reimbursementNote"
+              type="text"
+              placeholder="Ej. Transferencia BBVA"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className={inputCls}
+            />
+          </div>
           {error && <p className="text-[13px] text-[#EF4444]">{error}</p>}
           <button
             type="button"
