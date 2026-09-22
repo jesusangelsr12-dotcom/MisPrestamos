@@ -100,6 +100,19 @@ export async function fetchExpenseTransactionsForAccount(
   return rows as TransactionWithRelations[];
 }
 
+// Gastos de todas las cuentas en un rango de fechas, usado por el presupuesto
+// mensual (que agrupa por categoría, no por cuenta ni por corte de tarjeta).
+export async function fetchExpensesInRange(
+  startDate: string,
+  endDate: string
+): Promise<TransactionWithRelations[]> {
+  const rows = await sql.query(
+    `${WITH_RELATIONS_SELECT} where t.type = 'expense' and t.date between $1 and $2 order by t.date desc`,
+    [startDate, endDate]
+  );
+  return rows as TransactionWithRelations[];
+}
+
 export async function fetchTransactionById(id: string): Promise<TransactionWithRelations | null> {
   const rows = await sql.query(`${WITH_RELATIONS_SELECT} where t.id = $1 limit 1`, [id]);
   return (rows[0] as TransactionWithRelations) ?? null;
