@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, X } from "lucide-react";
 
 interface TagOption {
   id: string;
@@ -14,6 +14,7 @@ interface TagPickerProps {
   value: string | null;
   onChange: (id: string | null) => void;
   onCreate: (name: string) => Promise<TagOption>;
+  onDelete?: (id: string) => Promise<void>; // habilita el modo "editar" para borrar chips
   noneLabel?: string; // si se define, se muestra como chip seleccionable con value=null
 }
 
@@ -22,10 +23,23 @@ const chipCls = (active: boolean) =>
     active ? "bg-[#2C6CFF] text-white" : "border border-[#EBEBEB] bg-white text-[#6B6B6B]"
   }`;
 
-export function TagPicker({ label, options, value, onChange, onCreate, noneLabel }: TagPickerProps) {
+export function TagPicker({ label, options, value, onChange, onCreate, onDelete, noneLabel }: TagPickerProps) {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDelete(id: string) {
+    if (!onDelete) return;
+    setDeletingId(id);
+    try {
+      await onDelete(id);
+      if (value === id) onChange(null);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   async function handleCreate() {
     const name = newName.trim();
@@ -43,19 +57,42 @@ export function TagPicker({ label, options, value, onChange, onCreate, noneLabel
 
   return (
     <div>
-      <span className="mb-2 block text-[13px] font-medium text-[#1A1A1A]">{label}</span>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="block text-[13px] font-medium text-[#1A1A1A]">{label}</span>
+        {onDelete && options.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setEditMode((v) => !v)}
+            className="flex items-center gap-1 text-[12px] font-medium text-[#2C6CFF]"
+          >
+            <Pencil size={12} /> {editMode ? "Listo" : "Editar"}
+          </button>
+        )}
+      </div>
       <div className="flex gap-2 overflow-x-auto pb-1">
         {noneLabel && (
           <button type="button" onClick={() => onChange(null)} className={chipCls(value === null)}>
             {noneLabel}
           </button>
         )}
-        {options.map((option) => (
-          <button key={option.id} type="button" onClick={() => onChange(option.id)} className={chipCls(value === option.id)}>
-            {option.name}
-          </button>
-        ))}
-        {!creating && (
+        {options.map((option) =>
+          editMode ? (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => handleDelete(option.id)}
+              disabled={deletingId === option.id}
+              className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-[#F5C2C2] bg-[#FEF2F2] px-3.5 text-[13px] font-medium text-[#EF4444] disabled:opacity-50"
+            >
+              {option.name} <X size={13} />
+            </button>
+          ) : (
+            <button key={option.id} type="button" onClick={() => onChange(option.id)} className={chipCls(value === option.id)}>
+              {option.name}
+            </button>
+          )
+        )}
+        {!creating && !editMode && (
           <button
             type="button"
             onClick={() => setCreating(true)}

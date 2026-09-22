@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Person } from "@/types";
-import { fetchPeople, insertPerson } from "@/lib/db/people";
+import { fetchPeople, insertPerson, deletePersonById } from "@/lib/db/people";
 
 interface UsePeopleReturn {
   people: Person[];
   loading: boolean;
   createPerson: (name: string) => Promise<Person>;
+  deletePerson: (id: string) => Promise<void>;
 }
 
 export function usePeople(): UsePeopleReturn {
@@ -29,5 +30,16 @@ export function usePeople(): UsePeopleReturn {
     return created;
   }, []);
 
-  return { people, loading, createPerson };
+  const deletePerson = useCallback(async (id: string): Promise<void> => {
+    const previous = people;
+    setPeople((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await deletePersonById(id);
+    } catch (err) {
+      setPeople(previous);
+      throw err;
+    }
+  }, [people]);
+
+  return { people, loading, createPerson, deletePerson };
 }

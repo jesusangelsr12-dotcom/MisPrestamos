@@ -12,12 +12,22 @@ function formatShort(dateYMD: string): string {
   return new Date(y, m - 1, d).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
 }
 
-export function TransactionListItem({ transaction, amount, installmentLabel }: PeriodLineItem) {
+interface TransactionListItemProps extends PeriodLineItem {
+  onTap?: () => void;
+}
+
+export function TransactionListItem({ transaction, amount, installmentLabel, onTap }: TransactionListItemProps) {
   const isNegative = amount < 0;
   const label = transaction.note || transaction.category?.name || TYPE_LABELS[transaction.type];
 
   return (
-    <div className="flex items-center justify-between rounded-xl bg-white px-4 py-3.5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+    <div
+      onClick={onTap}
+      role={onTap ? "button" : undefined}
+      tabIndex={onTap ? 0 : undefined}
+      className={`flex w-full items-center justify-between rounded-xl bg-white px-4 py-3.5 text-left ${onTap ? "cursor-pointer" : ""}`}
+      style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}
+    >
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-medium text-[#1A1A1A]">{label}</p>
         <p className="text-[12px] text-[#A8A8A8]">

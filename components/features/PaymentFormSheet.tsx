@@ -30,7 +30,7 @@ interface PaymentFormSheetProps {
 }
 
 export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, otherAccounts, onSubmit }: PaymentFormSheetProps) {
-  const { categories, createCategory } = useCategories();
+  const { categories, createCategory, deleteCategory } = useCategories();
 
   const [date, setDate] = useState(todayYMD());
   const [amount, setAmount] = useState("");
@@ -123,7 +123,7 @@ export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, oth
             {errors.source_account_id && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.source_account_id}</p>}
           </div>
 
-          <TagPicker label="Categoría" options={categories} value={categoryId} onChange={setCategoryId} onCreate={createCategory} noneLabel="Sin categoría" />
+          <TagPicker label="Categoría" options={categories} value={categoryId} onChange={setCategoryId} onCreate={createCategory} onDelete={deleteCategory} noneLabel="Sin categoría" />
 
           <div>
             <label htmlFor="paymentNote" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Nota (opcional)</label>

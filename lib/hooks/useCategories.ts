@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { Category } from "@/types";
-import { fetchCategories, insertCategory } from "@/lib/db/categories";
+import { fetchCategories, insertCategory, deleteCategoryById } from "@/lib/db/categories";
 
 interface UseCategoriesReturn {
   categories: Category[];
   loading: boolean;
   createCategory: (name: string) => Promise<Category>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
 export function useCategories(): UseCategoriesReturn {
@@ -29,5 +30,16 @@ export function useCategories(): UseCategoriesReturn {
     return created;
   }, []);
 
-  return { categories, loading, createCategory };
+  const deleteCategory = useCallback(async (id: string): Promise<void> => {
+    const previous = categories;
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await deleteCategoryById(id);
+    } catch (err) {
+      setCategories(previous);
+      throw err;
+    }
+  }, [categories]);
+
+  return { categories, loading, createCategory, deleteCategory };
 }

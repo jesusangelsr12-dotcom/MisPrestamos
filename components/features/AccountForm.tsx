@@ -26,19 +26,21 @@ const accountSchema = z
   });
 
 interface AccountFormProps {
+  initialData?: AccountInput;
   onSubmit: (data: AccountInput) => Promise<void>;
   submitLabel: string;
+  redirectTo?: string;
 }
 
 const inputCls =
   "h-12 w-full rounded-[10px] border border-[#EBEBEB] bg-white px-3.5 text-[15px] text-[#1A1A1A] placeholder:text-[#A8A8A8] focus:border-[#2C6CFF] focus:outline-none focus:ring-[3px] focus:ring-[#2C6CFF]/12";
 
-export function AccountForm({ onSubmit, submitLabel }: AccountFormProps) {
+export function AccountForm({ initialData, onSubmit, submitLabel, redirectTo = "/" }: AccountFormProps) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [type, setType] = useState<AccountType>("cash");
-  const [cutOffDay, setCutOffDay] = useState("");
-  const [paymentDueDay, setPaymentDueDay] = useState("");
+  const [name, setName] = useState(initialData?.name ?? "");
+  const [type, setType] = useState<AccountType>(initialData?.type ?? "cash");
+  const [cutOffDay, setCutOffDay] = useState(initialData?.cut_off_day ? String(initialData.cut_off_day) : "");
+  const [paymentDueDay, setPaymentDueDay] = useState(initialData?.payment_due_day ? String(initialData.payment_due_day) : "");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -66,7 +68,7 @@ export function AccountForm({ onSubmit, submitLabel }: AccountFormProps) {
     setSubmitting(true);
     try {
       await onSubmit(parsed.data);
-      router.push("/");
+      router.push(redirectTo);
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : "Error al guardar" });
       setSubmitting(false);

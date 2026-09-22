@@ -30,8 +30,8 @@ interface ExpenseFormSheetProps {
 }
 
 export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, onSubmit }: ExpenseFormSheetProps) {
-  const { categories, createCategory } = useCategories();
-  const { people, createPerson } = usePeople();
+  const { categories, createCategory, deleteCategory } = useCategories();
+  const { people, createPerson, deletePerson } = usePeople();
 
   const [date, setDate] = useState(todayYMD());
   const [amount, setAmount] = useState("");
@@ -124,11 +124,11 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
           {errors.account_id && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.account_id}</p>}
         </div>
 
-        <TagPicker label="Categoría" options={categories} value={categoryId} onChange={setCategoryId} onCreate={createCategory} noneLabel="Sin categoría" />
+        <TagPicker label="Categoría" options={categories} value={categoryId} onChange={setCategoryId} onCreate={createCategory} onDelete={deleteCategory} noneLabel="Sin categoría" />
 
         <MSIMonthsPicker value={msiMonths} onChange={setMsiMonths} />
 
-        <TagPicker label="¿De quién es?" options={people} value={personId} onChange={setPersonId} onCreate={createPerson} noneLabel="Mío" />
+        <TagPicker label="¿De quién es?" options={people} value={personId} onChange={setPersonId} onCreate={createPerson} onDelete={deletePerson} noneLabel="Mío" />
 
         <div>
           <label htmlFor="expenseNote" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Nota (opcional)</label>
