@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useHomeAccounts } from "@/lib/hooks/useHomeAccounts";
 import { AccountListItem } from "@/components/features/AccountListItem";
+import { DuePaymentsBanner } from "@/components/features/DuePaymentsBanner";
 import { FinanceBottomNav } from "@/components/features/FinanceBottomNav";
 
 function getMonthName(): string {
@@ -24,7 +25,7 @@ const fadeUp = {
 
 export default function HomePage() {
   const router = useRouter();
-  const { accounts, loading, error, refresh } = useHomeAccounts();
+  const { accounts, upcomingDuePayments, loading, error, refresh } = useHomeAccounts();
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
@@ -59,11 +60,18 @@ export default function HomePage() {
             </Link>
           </motion.div>
         ) : (
-          <motion.div variants={fadeUp} className="flex flex-col gap-2">
-            {accounts.map((account) => (
-              <AccountListItem key={account.id} account={account} onTap={() => router.push(`/accounts/${account.id}`)} />
-            ))}
-          </motion.div>
+          <>
+            {upcomingDuePayments.length > 0 && (
+              <motion.div variants={fadeUp}>
+                <DuePaymentsBanner payments={upcomingDuePayments} />
+              </motion.div>
+            )}
+            <motion.div variants={fadeUp} className="flex flex-col gap-2">
+              {accounts.map((account) => (
+                <AccountListItem key={account.id} account={account} onTap={() => router.push(`/accounts/${account.id}`)} />
+              ))}
+            </motion.div>
+          </>
         )}
       </motion.div>
 
