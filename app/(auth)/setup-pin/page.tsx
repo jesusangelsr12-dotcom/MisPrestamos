@@ -43,7 +43,7 @@ export default function SetupPinPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push("/");
   }
 
   return (

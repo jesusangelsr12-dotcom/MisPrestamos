@@ -35,7 +35,7 @@ export default function PinPage() {
     const result = await verifyPin(pin);
 
     if (result.success) {
-      router.push("/dashboard");
+      router.push("/");
       return;
     }
 

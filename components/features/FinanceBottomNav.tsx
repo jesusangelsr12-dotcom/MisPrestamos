@@ -8,7 +8,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Inicio", Icon: Home, exact: true },
   { href: "/msi-expenses", label: "Gastos MSI", Icon: BarChart2, exact: false },
   { href: "/budget", label: "Presupuesto", Icon: PieChart, exact: false },
-  { href: "/dashboard", label: "Préstamos", Icon: Handshake, exact: false },
+  { href: "/loans", label: "Préstamos", Icon: Handshake, exact: false },
 ] as const;
 
 export function FinanceBottomNav() {

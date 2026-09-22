@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Cuotas",
-  description: "Controla tus MSI y préstamos",
+  description: "Cuentas, gastos, MSI, presupuesto y préstamos",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
