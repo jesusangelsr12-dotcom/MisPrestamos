@@ -64,10 +64,13 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
       );
       setAccounts(creditCards);
 
+      const expensesPerAccount = await Promise.all(
+        creditCards.map((account) => fetchExpenseTransactionsForAccount(account.id))
+      );
       const perAccount: Record<string, TransactionWithRelations[]> = {};
-      for (const account of creditCards) {
-        perAccount[account.id] = filterMsi(await fetchExpenseTransactionsForAccount(account.id));
-      }
+      creditCards.forEach((account, i) => {
+        perAccount[account.id] = filterMsi(expensesPerAccount[i]);
+      });
       setExpensesByAccount(perAccount);
 
       const notMineExpenseIds = Object.values(perAccount)
