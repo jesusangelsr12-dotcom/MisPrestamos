@@ -106,3 +106,13 @@ export interface Budget {
 export interface BudgetWithCategory extends Budget {
   category: Pick<Category, "name">;
 }
+
+// Pagos que me hace de vuelta la persona dueña de un gasto que no es "Mío".
+export interface Reimbursement {
+  id: string;
+  expense_id: string;
+  amount: number;
+  date: string;
+  note: string | null;
+  created_at: string;
+}

@@ -5,6 +5,7 @@ import type { Account, Person, TransactionWithRelations } from "@/types";
 import { fetchAccounts } from "@/lib/db/accounts";
 import { fetchExpenseTransactionsForAccount } from "@/lib/db/transactions";
 import { fetchPeople } from "@/lib/db/people";
+import { fetchReimbursementTotals } from "@/lib/db/reimbursements";
 import { getBillingPeriodByOffset } from "@/lib/utils/cardPeriods";
 import { calculatePeriodBalance, getMaxForwardOffset, type PeriodLineItem } from "@/lib/utils/accountBalance";
 
@@ -30,6 +31,7 @@ export type PersonFilter = "all" | null | string;
 interface UseMSIExpensesByCardReturn {
   groups: CardMSIGroup[];
   people: Person[];
+  reimbursedTotals: Record<string, number>; // expense_id -> total reembolsado
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -45,6 +47,7 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [expensesByAccount, setExpensesByAccount] = useState<Record<string, TransactionWithRelations[]>>({});
   const [people, setPeople] = useState<Person[]>([]);
+  const [reimbursedTotals, setReimbursedTotals] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +69,12 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
         perAccount[account.id] = filterMsi(await fetchExpenseTransactionsForAccount(account.id));
       }
       setExpensesByAccount(perAccount);
+
+      const notMineExpenseIds = Object.values(perAccount)
+        .flat()
+        .filter((e) => e.person_id !== null)
+        .map((e) => e.id);
+      setReimbursedTotals(await fetchReimbursementTotals(notMineExpenseIds));
     } catch (err) {
       console.error("[useMSIExpensesByCard] Error:", err);
       setError(err instanceof Error ? err.message : "Error al cargar gastos MSI");
@@ -103,5 +112,5 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
     groups.push({ account, periodTotals, currentItems });
   }
 
-  return { groups, people, loading, error, refresh: load };
+  return { groups, people, reimbursedTotals, loading, error, refresh: load };
 }

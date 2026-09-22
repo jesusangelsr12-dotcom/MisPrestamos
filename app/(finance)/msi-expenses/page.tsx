@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useMSIExpensesByCard, type PersonFilter } from "@/lib/hooks/useMSIExpensesByCard";
 import { FinanceBottomNav } from "@/components/features/FinanceBottomNav";
-import { TransactionListItem } from "@/components/features/TransactionListItem";
+import { MSIExpenseItem } from "@/components/features/MSIExpenseItem";
+import { ReimbursementSheet } from "@/components/features/ReimbursementSheet";
 import { formatCurrency } from "@/lib/utils/finance";
+import type { TransactionWithRelations } from "@/types";
 
 function chipCls(active: boolean) {
   return `flex h-9 shrink-0 items-center rounded-full px-3.5 text-[13px] font-medium ${
@@ -17,7 +19,8 @@ function chipCls(active: boolean) {
 export default function MSIExpensesPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<PersonFilter>("all");
-  const { groups, people, loading, error, refresh } = useMSIExpensesByCard(filter);
+  const { groups, people, reimbursedTotals, loading, error, refresh } = useMSIExpensesByCard(filter);
+  const [reimbursingExpense, setReimbursingExpense] = useState<TransactionWithRelations | null>(null);
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
@@ -81,7 +84,12 @@ export default function MSIExpensesPage() {
 
                 <div className="flex flex-col gap-2">
                   {group.currentItems.map((item) => (
-                    <TransactionListItem key={item.transaction.id} {...item} />
+                    <MSIExpenseItem
+                      key={item.transaction.id}
+                      item={item}
+                      reimbursedTotal={reimbursedTotals[item.transaction.id] ?? 0}
+                      onOpenReimbursements={() => setReimbursingExpense(item.transaction)}
+                    />
                   ))}
                 </div>
               </div>
@@ -89,6 +97,17 @@ export default function MSIExpensesPage() {
           </div>
         )}
       </motion.div>
+
+      {reimbursingExpense && (
+        <ReimbursementSheet
+          isOpen={!!reimbursingExpense}
+          onClose={() => setReimbursingExpense(null)}
+          expenseId={reimbursingExpense.id}
+          personName={reimbursingExpense.person?.name ?? ""}
+          totalAmount={reimbursingExpense.amount}
+          onChanged={refresh}
+        />
+      )}
 
       <FinanceBottomNav />
     </main>
