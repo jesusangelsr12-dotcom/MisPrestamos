@@ -5,7 +5,12 @@ import type { Account } from "@/types";
 
 export type AccountInput = Omit<Account, "id" | "created_at">;
 
-const ACCOUNT_COLUMNS = `id, name, type, cut_off_day, payment_due_day, created_at`;
+// created_at es timestamptz: el driver de Neon lo devuelve como Date, no
+// string, si no se castea explícitamente — igual que los numeric necesitan
+// ::float8. Sin este cast, cualquier código que trate created_at como string
+// (ej. .slice(), parseYMD) truena en runtime aunque TypeScript no se queje.
+const ACCOUNT_COLUMNS = `id, name, type, cut_off_day, payment_due_day,
+  to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at`;
 
 export async function fetchAccounts(): Promise<Account[]> {
   const rows = await sql.query(

@@ -39,15 +39,23 @@ export interface TransactionUpdateInput {
   msi_months?: number;
 }
 
-const TRANSACTION_COLUMNS = `id, type, date,
+// date y created_at son date/timestamptz: sin castear a texto, el driver de
+// Neon los devuelve como Date en vez de string (igual que los numeric
+// necesitan ::float8), y todo el código de periodos de esta app asume
+// strings "YYYY-MM-DD".
+const TRANSACTION_COLUMNS = `id, type,
+  date::text as date,
   amount::float8 as amount,
-  account_id, source_account_id, category_id, person_id, note, msi_months, created_at`;
+  account_id, source_account_id, category_id, person_id, note, msi_months,
+  to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at`;
 
 const WITH_RELATIONS_SELECT = `
   select
-    t.id, t.type, t.date,
+    t.id, t.type,
+    t.date::text as date,
     t.amount::float8 as amount,
-    t.account_id, t.source_account_id, t.category_id, t.person_id, t.note, t.msi_months, t.created_at,
+    t.account_id, t.source_account_id, t.category_id, t.person_id, t.note, t.msi_months,
+    to_char(t.created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at,
     case when c.id is null then null else json_build_object('name', c.name) end as category,
     case when p.id is null then null else json_build_object('name', p.name) end as person,
     case when sa.id is null then null else json_build_object('name', sa.name, 'type', sa.type) end as source_account

@@ -10,7 +10,14 @@ export interface ReimbursementInput {
   note: string | null;
 }
 
-const REIMBURSEMENT_COLUMNS = `id, expense_id, date, amount::float8 as amount, note, created_at`;
+// date y created_at son date/timestamptz: sin castear a texto, el driver
+// los devuelve como Date en vez de string (igual que los numeric necesitan
+// ::float8).
+const REIMBURSEMENT_COLUMNS = `id, expense_id,
+  date::text as date,
+  amount::float8 as amount,
+  note,
+  to_char(created_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as created_at`;
 
 export async function fetchReimbursementsForExpense(expenseId: string): Promise<Reimbursement[]> {
   const rows = await sql.query(
