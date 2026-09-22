@@ -14,7 +14,12 @@ const paymentSchema = z
   .object({
     date: z.string().min(1, "Fecha requerida"),
     amount: z.number().positive("El monto debe ser mayor a 0"),
+    account_id: z.string().min(1, "Selecciona la cuenta a pagar"),
     source_account_id: z.string().min(1, "Selecciona de dónde sale el pago"),
+  })
+  .refine((data) => data.account_id !== data.source_account_id, {
+    message: "La cuenta a pagar y el origen deben ser distintos",
+    path: ["source_account_id"],
   });
 
 const inputCls =
@@ -23,18 +28,20 @@ const inputCls =
 interface PaymentFormSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  cardAccountId: string;
-  cardName: string;
-  otherAccounts: Account[]; // cuentas distintas a la tarjeta, de donde puede salir el pago
+  accounts: Account[]; // todas las cuentas, ordenadas
+  defaultAccountId: string; // cuenta a pagar preseleccionada (ej. la tarjeta que se está viendo)
   onSubmit: (input: PaymentInput) => Promise<void>;
 }
 
-export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, otherAccounts, onSubmit }: PaymentFormSheetProps) {
+export function PaymentFormSheet({ isOpen, onClose, accounts, defaultAccountId, onSubmit }: PaymentFormSheetProps) {
   const { categories, createCategory, deleteCategory } = useCategories();
+
+  const defaultSource = accounts.find((a) => a.id !== defaultAccountId)?.id ?? "";
 
   const [date, setDate] = useState(todayYMD());
   const [amount, setAmount] = useState("");
-  const [sourceAccountId, setSourceAccountId] = useState(otherAccounts[0]?.id ?? "");
+  const [accountId, setAccountId] = useState(defaultAccountId);
+  const [sourceAccountId, setSourceAccountId] = useState(defaultSource);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -43,7 +50,8 @@ export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, oth
   function reset() {
     setDate(todayYMD());
     setAmount("");
-    setSourceAccountId(otherAccounts[0]?.id ?? "");
+    setAccountId(defaultAccountId);
+    setSourceAccountId(defaultSource);
     setCategoryId(null);
     setNote("");
     setErrors({});
@@ -54,7 +62,7 @@ export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, oth
     setErrors({});
 
     const parsedAmount = parseFloat(amount);
-    const parsed = paymentSchema.safeParse({ date, amount: parsedAmount, source_account_id: sourceAccountId });
+    const parsed = paymentSchema.safeParse({ date, amount: parsedAmount, account_id: accountId, source_account_id: sourceAccountId });
     if (!parsed.success) {
       const fe: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -71,7 +79,7 @@ export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, oth
         type: "payment",
         date,
         amount: parsedAmount,
-        account_id: cardAccountId,
+        account_id: accountId,
         source_account_id: sourceAccountId,
         category_id: categoryId,
         note: note.trim() || null,
@@ -86,10 +94,10 @@ export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, oth
   }
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title={`Pago a ${cardName}`}>
-      {otherAccounts.length === 0 ? (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title="Pago o ingreso">
+      {accounts.length < 2 ? (
         <p className="py-6 text-center text-[14px] text-[#6B6B6B]">
-          Necesitas otra cuenta (efectivo, débito, etc.) para registrar de dónde sale el pago.
+          Necesitas al menos dos cuentas para registrar un pago (una a pagar y otra de origen).
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -114,9 +122,18 @@ export function PaymentFormSheet({ isOpen, onClose, cardAccountId, cardName, oth
           </div>
 
           <div>
+            <label htmlFor="paymentAccount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Cuenta a pagar</label>
+            <select id="paymentAccount" value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputCls}>
+              {accounts.map((a) => (
+                <option key={a.id} value={a.id}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label htmlFor="paymentSource" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Cuenta de origen</label>
             <select id="paymentSource" value={sourceAccountId} onChange={(e) => setSourceAccountId(e.target.value)} className={inputCls}>
-              {otherAccounts.map((a) => (
+              {accounts.map((a) => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>

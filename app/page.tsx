@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useHomeAccounts } from "@/lib/hooks/useHomeAccounts";
 import { AccountListItem } from "@/components/features/AccountListItem";
 import { DuePaymentsBanner } from "@/components/features/DuePaymentsBanner";
+import { HomeActionFAB } from "@/components/features/HomeActionFAB";
 import { FinanceBottomNav } from "@/components/features/FinanceBottomNav";
 
 function getMonthName(): string {
@@ -75,18 +76,7 @@ export default function HomePage() {
         )}
       </motion.div>
 
-      {accounts.length > 0 && (
-        <Link
-          href="/accounts/new"
-          className="fixed bottom-24 right-5 flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[#2C6CFF] text-white"
-          style={{ boxShadow: "0 4px 16px rgba(44,108,255,0.35)" }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </Link>
-      )}
+      {accounts.length > 0 && <HomeActionFAB accounts={accounts} onCreated={refresh} />}
 
       <FinanceBottomNav />
     </main>
