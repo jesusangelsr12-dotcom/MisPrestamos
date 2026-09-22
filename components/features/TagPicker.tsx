@@ -57,7 +57,7 @@ export function TagPicker({ label, options, value, onChange, onCreate, onDelete,
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-1.5 flex items-center justify-between">
         <span className="block text-[13px] font-medium text-[#1A1A1A]">{label}</span>
         {onDelete && options.length > 0 && (
           <button

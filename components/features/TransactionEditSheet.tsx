@@ -95,22 +95,23 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title={`Editar ${TYPE_LABELS[transaction.type]}`}>
-      <div className="flex flex-col gap-5">
-        <div>
-          <label htmlFor="editDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Fecha</label>
-          <input id="editDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
-        </div>
-
-        <div>
-          <label htmlFor="editAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto</label>
-          <input
-            id="editAmount"
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            className={`${inputCls} font-mono`}
-          />
+      <div className="flex flex-col gap-3.5">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="editDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Fecha</label>
+            <input id="editDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+          </div>
+          <div>
+            <label htmlFor="editAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto</label>
+            <input
+              id="editAmount"
+              type="text"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              className={`${inputCls} font-mono`}
+            />
+          </div>
         </div>
 
         {transaction.type !== "transfer" && (
@@ -123,10 +124,13 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
           <TagPicker label="¿De quién es?" options={people} value={personId} onChange={setPersonId} onCreate={createPerson} onDelete={deletePerson} noneLabel="Mío" />
         )}
 
-        <div>
-          <label htmlFor="editNote" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Nota (opcional)</label>
-          <input id="editNote" type="text" value={note} onChange={(e) => setNote(e.target.value)} className={inputCls} />
-        </div>
+        <input
+          type="text"
+          placeholder="Nota (opcional)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className={inputCls}
+        />
 
         {error && <p className="text-[14px] text-[#EF4444]">{error}</p>}
 

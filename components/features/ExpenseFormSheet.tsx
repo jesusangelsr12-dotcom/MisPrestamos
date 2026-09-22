@@ -93,25 +93,26 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} title="Nuevo gasto">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div>
-          <label htmlFor="expenseDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Fecha</label>
-          <input id="expenseDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
-          {errors.date && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.date}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="expenseAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto</label>
-          <input
-            id="expenseAmount"
-            type="text"
-            inputMode="decimal"
-            placeholder="$0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-            className={`${inputCls} font-mono`}
-          />
-          {errors.amount && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.amount}</p>}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="expenseDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Fecha</label>
+            <input id="expenseDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+            {errors.date && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.date}</p>}
+          </div>
+          <div>
+            <label htmlFor="expenseAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto</label>
+            <input
+              id="expenseAmount"
+              type="text"
+              inputMode="decimal"
+              placeholder="$0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              className={`${inputCls} font-mono`}
+            />
+            {errors.amount && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.amount}</p>}
+          </div>
         </div>
 
         <div>
@@ -130,10 +131,13 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
 
         <TagPicker label="¿De quién es?" options={people} value={personId} onChange={setPersonId} onCreate={createPerson} onDelete={deletePerson} noneLabel="Mío" />
 
-        <div>
-          <label htmlFor="expenseNote" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Nota (opcional)</label>
-          <input id="expenseNote" type="text" value={note} onChange={(e) => setNote(e.target.value)} className={inputCls} />
-        </div>
+        <input
+          type="text"
+          placeholder="Nota (opcional)"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          className={inputCls}
+        />
 
         {errors.form && <p className="text-[14px] text-[#EF4444]">{errors.form}</p>}
 

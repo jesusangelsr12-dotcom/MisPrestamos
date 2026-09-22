@@ -10,7 +10,7 @@ interface MSIMonthsPickerProps {
 export function MSIMonthsPicker({ value, onChange }: MSIMonthsPickerProps) {
   return (
     <div>
-      <span className="mb-2 block text-[13px] font-medium text-[#1A1A1A]">Meses sin intereses</span>
+      <span className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Meses sin intereses</span>
       <div className="flex flex-wrap gap-2">
         {MSI_MONTHS_OPTIONS.map((months) => (
           <button

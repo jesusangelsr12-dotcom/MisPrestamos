@@ -100,52 +100,57 @@ export function PaymentFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
           Necesitas al menos dos cuentas para registrar un pago (una a pagar y otra de origen).
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div>
-            <label htmlFor="paymentDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Fecha</label>
-            <input id="paymentDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
-            {errors.date && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.date}</p>}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="paymentDate" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Fecha</label>
+              <input id="paymentDate" type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
+              {errors.date && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.date}</p>}
+            </div>
+            <div>
+              <label htmlFor="paymentAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto</label>
+              <input
+                id="paymentAmount"
+                type="text"
+                inputMode="decimal"
+                placeholder="$0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                className={`${inputCls} font-mono`}
+              />
+              {errors.amount && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.amount}</p>}
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="paymentAmount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Monto</label>
-            <input
-              id="paymentAmount"
-              type="text"
-              inputMode="decimal"
-              placeholder="$0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
-              className={`${inputCls} font-mono`}
-            />
-            {errors.amount && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.amount}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="paymentAccount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Cuenta a pagar</label>
-            <select id="paymentAccount" value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputCls}>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="paymentSource" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Cuenta de origen</label>
-            <select id="paymentSource" value={sourceAccountId} onChange={(e) => setSourceAccountId(e.target.value)} className={inputCls}>
-              {accounts.map((a) => (
-                <option key={a.id} value={a.id}>{a.name}</option>
-              ))}
-            </select>
-            {errors.source_account_id && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.source_account_id}</p>}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="paymentAccount" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">A pagar</label>
+              <select id="paymentAccount" value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputCls}>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="paymentSource" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Origen</label>
+              <select id="paymentSource" value={sourceAccountId} onChange={(e) => setSourceAccountId(e.target.value)} className={inputCls}>
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+              {errors.source_account_id && <p className="mt-1 text-[13px] text-[#EF4444]">{errors.source_account_id}</p>}
+            </div>
           </div>
 
           <TagPicker label="Categoría" options={categories} value={categoryId} onChange={setCategoryId} onCreate={createCategory} onDelete={deleteCategory} noneLabel="Sin categoría" />
 
-          <div>
-            <label htmlFor="paymentNote" className="mb-1.5 block text-[13px] font-medium text-[#1A1A1A]">Nota (opcional)</label>
-            <input id="paymentNote" type="text" value={note} onChange={(e) => setNote(e.target.value)} className={inputCls} />
-          </div>
+          <input
+            type="text"
+            placeholder="Nota (opcional)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className={inputCls}
+          />
 
           {errors.form && <p className="text-[14px] text-[#EF4444]">{errors.form}</p>}
 
