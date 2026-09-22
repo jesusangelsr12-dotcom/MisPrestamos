@@ -95,14 +95,18 @@ export async function fetchTransactionsForAccountRangeAnyDirection(
   return rows as TransactionWithRelations[];
 }
 
-// Todos los gastos históricos de una tarjeta (sin límite de fecha): se
-// necesitan para saber si una compra a MSI de hace varios cortes todavía
-// tiene una cuota pendiente en el periodo que se está mostrando.
+// Gastos de una tarjeta que todavía pueden tener una cuota MSI pendiente:
+// se acotan a los últimos 37 meses porque el MSI más largo soportado es de
+// 36 (ver MSI_MONTHS_OPTIONS) — una compra más vieja que eso ya no puede
+// tener cuotas por cubrir, y acotar evita traer años de historial completo
+// en cada carga.
 export async function fetchExpenseTransactionsForAccount(
   accountId: string
 ): Promise<TransactionWithRelations[]> {
   const rows = await sql.query(
-    `${WITH_RELATIONS_SELECT} where t.account_id = $1 and t.type = 'expense' order by t.date asc`,
+    `${WITH_RELATIONS_SELECT}
+     where t.account_id = $1 and t.type = 'expense' and t.date >= (current_date - interval '37 months')
+     order by t.date asc`,
     [accountId]
   );
   return rows as TransactionWithRelations[];

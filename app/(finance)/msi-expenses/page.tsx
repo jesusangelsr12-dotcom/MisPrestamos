@@ -105,6 +105,7 @@ export default function MSIExpensesPage() {
           expenseId={reimbursingExpense.id}
           personName={reimbursingExpense.person?.name ?? ""}
           totalAmount={reimbursingExpense.amount}
+          msiMonths={reimbursingExpense.msi_months}
           onChanged={refresh}
         />
       )}

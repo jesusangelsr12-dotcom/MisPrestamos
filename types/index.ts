@@ -108,9 +108,12 @@ export interface BudgetWithCategory extends Budget {
 }
 
 // Pagos que me hace de vuelta la persona dueña de un gasto que no es "Mío".
+// Cada uno corresponde a una cuota MSI marcada como pagada (installment_number
+// null solo en registros antiguos de antes de este esquema).
 export interface Reimbursement {
   id: string;
   expense_id: string;
+  installment_number: number | null;
   amount: number;
   date: string;
   note: string | null;

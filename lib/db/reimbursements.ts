@@ -5,15 +5,15 @@ import type { Reimbursement } from "@/types";
 
 export interface ReimbursementInput {
   expense_id: string;
+  installment_number: number;
   amount: number;
   date: string;
-  note: string | null;
 }
 
 // date y created_at son date/timestamptz: sin castear a texto, el driver
 // los devuelve como Date en vez de string (igual que los numeric necesitan
 // ::float8).
-const REIMBURSEMENT_COLUMNS = `id, expense_id,
+const REIMBURSEMENT_COLUMNS = `id, expense_id, installment_number,
   date::text as date,
   amount::float8 as amount,
   note,
@@ -21,7 +21,7 @@ const REIMBURSEMENT_COLUMNS = `id, expense_id,
 
 export async function fetchReimbursementsForExpense(expenseId: string): Promise<Reimbursement[]> {
   const rows = await sql.query(
-    `select ${REIMBURSEMENT_COLUMNS} from reimbursements where expense_id = $1 order by date desc, created_at desc`,
+    `select ${REIMBURSEMENT_COLUMNS} from reimbursements where expense_id = $1 order by installment_number asc nulls last, date asc`,
     [expenseId]
   );
   return rows as Reimbursement[];
@@ -42,12 +42,14 @@ export async function fetchReimbursementTotals(expenseIds: string[]): Promise<Re
   return totals;
 }
 
+// Marca una cuota como pagada hoy. El índice único (expense_id,
+// installment_number) evita registrar la misma cuota dos veces.
 export async function insertReimbursement(input: ReimbursementInput): Promise<Reimbursement> {
   const rows = await sql.query(
-    `insert into reimbursements (expense_id, date, amount, note)
+    `insert into reimbursements (expense_id, installment_number, date, amount)
      values ($1, $2, $3, $4)
      returning ${REIMBURSEMENT_COLUMNS}`,
-    [input.expense_id, input.date, input.amount, input.note]
+    [input.expense_id, input.installment_number, input.date, input.amount]
   );
   return rows[0] as Reimbursement;
 }
