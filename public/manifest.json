@@ -1,8 +1,8 @@
 {
   "name": "Cuotas",
   "short_name": "Cuotas",
-  "description": "Controla tus MSI y préstamos",
-  "start_url": "/dashboard",
+  "description": "Cuentas, gastos, MSI, presupuesto y préstamos",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#F7F7F5",
   "theme_color": "#2C6CFF",
