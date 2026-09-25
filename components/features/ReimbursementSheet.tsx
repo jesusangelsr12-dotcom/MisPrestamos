@@ -26,8 +26,9 @@ interface ReimbursementSheetProps {
   isOpen: boolean;
   onClose: () => void;
   expenseId: string;
+  personId: string | null; // null = dueño del gasto completo
   personName: string;
-  totalAmount: number;
+  totalAmount: number; // lo que le toca pagar a esta persona (todo el gasto o su parte)
   msiMonths: number;
   onChanged: () => void; // refresca los totales en la pantalla que abrió el sheet
 }
@@ -36,6 +37,7 @@ export function ReimbursementSheet({
   isOpen,
   onClose,
   expenseId,
+  personId,
   personName,
   totalAmount,
   msiMonths,
@@ -50,11 +52,11 @@ export function ReimbursementSheet({
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setHistory(await fetchReimbursementsForExpense(expenseId));
+      setHistory(await fetchReimbursementsForExpense(expenseId, personId));
     } finally {
       setLoading(false);
     }
-  }, [expenseId]);
+  }, [expenseId, personId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -76,7 +78,7 @@ export function ReimbursementSheet({
     setPendingInstallment(n);
     setError("");
     try {
-      await insertReimbursement({ expense_id: expenseId, installment_number: n, amount: cuotaAmount, date: todayYMD() });
+      await insertReimbursement({ expense_id: expenseId, person_id: personId, installment_number: n, amount: cuotaAmount, date: todayYMD() });
       await load();
       await revalidateFinanceData();
       onChanged();

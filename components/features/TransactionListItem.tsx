@@ -33,6 +33,7 @@ export function TransactionListItem({ transaction, amount, installmentLabel, onT
         <p className="text-[12px] text-[#A8A8A8]">
           {formatShort(transaction.date)}
           {transaction.person?.name ? ` · ${transaction.person.name}` : ""}
+          {transaction.shares.length > 0 ? ` · Con ${transaction.shares.map((s) => s.person_name).join(", ")}` : ""}
           {installmentLabel ? ` · ${installmentLabel}` : ""}
         </p>
       </div>

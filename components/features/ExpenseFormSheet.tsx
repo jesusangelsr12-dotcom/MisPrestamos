@@ -5,10 +5,12 @@ import { z } from "zod";
 import { BottomSheet } from "@/components/features/BottomSheet";
 import { TagPicker } from "@/components/features/TagPicker";
 import { MSIMonthsPicker } from "@/components/features/MSIMonthsPicker";
+import { ShareSplitEditor, draftsToShares, type ShareDraft } from "@/components/features/ShareSplitEditor";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { usePeople } from "@/lib/hooks/usePeople";
 import type { Account } from "@/types";
 import type { ExpenseInput } from "@/lib/db/transactions";
+import { validateShares } from "@/lib/utils/shares";
 
 const todayYMD = () => new Date().toISOString().slice(0, 10);
 
@@ -38,10 +40,15 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
   const [accountId, setAccountId] = useState(defaultAccountId);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [personId, setPersonId] = useState<string | null>(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [shareDrafts, setShareDrafts] = useState<ShareDraft[]>([]);
   const [msiMonths, setMsiMonths] = useState(0);
   const [note, setNote] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Si se borra una persona mientras se captura, su parte deja de contar.
+  const liveShareDrafts = shareDrafts.filter((d) => people.some((p) => p.id === d.person_id));
 
   function reset() {
     setDate(todayYMD());
@@ -49,6 +56,8 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
     setAccountId(defaultAccountId);
     setCategoryId(null);
     setPersonId(null);
+    setSplitEnabled(false);
+    setShareDrafts([]);
     setMsiMonths(0);
     setNote("");
     setErrors({});
@@ -70,6 +79,15 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
       return;
     }
 
+    // Solo un gasto "Mío" se puede dividir; si es 100% de otra persona, las
+    // partes que se hayan capturado se ignoran.
+    const shares = personId === null && splitEnabled ? draftsToShares(liveShareDrafts) : [];
+    const sharesError = validateShares(parsedAmount, personId, shares);
+    if (sharesError) {
+      setErrors({ shares: sharesError });
+      return;
+    }
+
     setSubmitting(true);
     try {
       await onSubmit({
@@ -80,6 +98,7 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
         category_id: categoryId,
         person_id: personId,
         msi_months: msiMonths,
+        shares,
         note: note.trim() || null,
       });
       reset();
@@ -130,6 +149,19 @@ export function ExpenseFormSheet({ isOpen, onClose, accounts, defaultAccountId, 
         <MSIMonthsPicker value={msiMonths} onChange={setMsiMonths} />
 
         <TagPicker label="¿De quién es?" options={people} value={personId} onChange={setPersonId} onCreate={createPerson} onDelete={deletePerson} noneLabel="Mío" />
+
+        {personId === null && (
+          <ShareSplitEditor
+            enabled={splitEnabled}
+            onToggle={setSplitEnabled}
+            total={parseFloat(amount) || 0}
+            msiMonths={msiMonths}
+            people={people}
+            drafts={liveShareDrafts}
+            onChange={setShareDrafts}
+            error={errors.shares}
+          />
+        )}
 
         <input
           type="text"

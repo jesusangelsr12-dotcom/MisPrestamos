@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { BottomSheet } from "@/components/features/BottomSheet";
 import { TagPicker } from "@/components/features/TagPicker";
 import { MSIMonthsPicker } from "@/components/features/MSIMonthsPicker";
+import { ShareSplitEditor, draftsToShares, sharesToDrafts, type ShareDraft } from "@/components/features/ShareSplitEditor";
+import { validateShares } from "@/lib/utils/shares";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { usePeople } from "@/lib/hooks/usePeople";
 import type { TransactionWithRelations } from "@/types";
@@ -34,6 +36,8 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [personId, setPersonId] = useState<string | null>(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [shareDrafts, setShareDrafts] = useState<ShareDraft[]>([]);
   const [msiMonths, setMsiMonths] = useState(0);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -47,6 +51,8 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
       setAmount(String(transaction.amount));
       setCategoryId(transaction.category_id);
       setPersonId(transaction.person_id);
+      setSplitEnabled(transaction.shares.length > 0);
+      setShareDrafts(sharesToDrafts(transaction.shares));
       setMsiMonths(transaction.msi_months);
       setNote(transaction.note ?? "");
       setError("");
@@ -56,12 +62,24 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
 
   if (!transaction) return null;
 
+  // Si se borra una persona mientras se edita, su parte deja de contar.
+  const liveShareDrafts = shareDrafts.filter((d) => people.some((p) => p.id === d.person_id));
+
   async function handleSave() {
     const parsedAmount = parseFloat(amount);
     if (!date || !(parsedAmount > 0)) {
       setError("Revisa la fecha y el monto");
       return;
     }
+
+    const isExpense = transaction!.type === "expense";
+    const shares = isExpense && personId === null && splitEnabled ? draftsToShares(liveShareDrafts) : [];
+    const sharesError = isExpense ? validateShares(parsedAmount, personId, shares) : null;
+    if (sharesError) {
+      setError(sharesError);
+      return;
+    }
+
     setSaving(true);
     setError("");
     try {
@@ -71,6 +89,7 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
         category_id: transaction!.type !== "transfer" ? categoryId : undefined,
         person_id: transaction!.type === "expense" ? personId : undefined,
         msi_months: transaction!.type === "expense" ? msiMonths : undefined,
+        shares: isExpense ? shares : undefined,
         note: note.trim() || null,
       });
       onClose();
@@ -122,6 +141,18 @@ export function TransactionEditSheet({ isOpen, onClose, transaction, onSave, onD
 
         {transaction.type === "expense" && (
           <TagPicker label="¿De quién es?" options={people} value={personId} onChange={setPersonId} onCreate={createPerson} onDelete={deletePerson} noneLabel="Mío" />
+        )}
+
+        {transaction.type === "expense" && personId === null && (
+          <ShareSplitEditor
+            enabled={splitEnabled}
+            onToggle={setSplitEnabled}
+            total={parseFloat(amount) || 0}
+            msiMonths={msiMonths}
+            people={people}
+            drafts={liveShareDrafts}
+            onChange={setShareDrafts}
+          />
         )}
 
         <input

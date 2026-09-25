@@ -9,6 +9,7 @@ import { fetchReimbursementTotals } from "@/lib/db/reimbursements";
 import { getBillingPeriodByOffset } from "@/lib/utils/cardPeriods";
 import { calculatePeriodBalance, getMaxForwardOffset, type PeriodLineItem } from "@/lib/utils/accountBalance";
 import { swrKeys } from "@/lib/swr/finance";
+import { portionForPerson } from "@/lib/utils/shares";
 
 function filterMsi(expenses: TransactionWithRelations[]): TransactionWithRelations[] {
   return expenses.filter((e) => e.msi_months > 0);
@@ -32,7 +33,7 @@ export type PersonFilter = "all" | null | string;
 interface UseMSIExpensesByCardReturn {
   groups: CardMSIGroup[];
   people: Person[];
-  reimbursedTotals: Record<string, number>; // expense_id -> total reembolsado
+  reimbursedTotals: Record<string, number>; // reimbursementKey(gasto, persona) -> total reembolsado
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -68,7 +69,7 @@ async function fetchMSIExpensesData(): Promise<MSIExpensesData> {
 
   const notMineExpenseIds = Object.values(expensesByAccount)
     .flat()
-    .filter((e) => e.person_id !== null)
+    .filter((e) => e.person_id !== null || e.shares.length > 0)
     .map((e) => e.id);
   const reimbursedTotals = await fetchReimbursementTotals(notMineExpenseIds);
 
@@ -84,9 +85,17 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
   for (const account of data?.creditCards ?? []) {
     const cutOffDay = account.cut_off_day!;
     const paymentDueDay = account.payment_due_day!;
-    const allExpenses = (data?.expensesByAccount[account.id] ?? []).filter(
-      (e) => personFilter === "all" || e.person_id === personFilter
-    );
+    // Con un filtro de persona, cada gasto cuenta solo por la parte que le
+    // toca (en gastos compartidos no es el total); con "Todos", por lo que
+    // cobra el banco. El gasto original se conserva para mostrarlo.
+    const originals = new Map<string, TransactionWithRelations>();
+    const allExpenses: TransactionWithRelations[] = [];
+    for (const e of data?.expensesByAccount[account.id] ?? []) {
+      const portion = portionForPerson(e, personFilter);
+      if (portion <= 0) continue;
+      originals.set(e.id, e);
+      allExpenses.push({ ...e, amount: portion });
+    }
     if (allExpenses.length === 0) continue;
 
     const maxOffset = Math.min(getMaxForwardOffset(cutOffDay, paymentDueDay, today, allExpenses), 12);
@@ -97,7 +106,12 @@ export function useMSIExpensesByCard(personFilter: PersonFilter): UseMSIExpenses
       const period = getBillingPeriodByOffset(cutOffDay, paymentDueDay, today, offset);
       const balance = calculatePeriodBalance(cutOffDay, paymentDueDay, period, allExpenses, []);
       periodTotals.push({ offset, label: periodLabel(offset), total: balance.total });
-      if (offset === 0) currentItems = balance.items;
+      if (offset === 0) {
+        currentItems = balance.items.map((item) => ({
+          ...item,
+          transaction: originals.get(item.transaction.id) ?? item.transaction,
+        }));
+      }
     }
 
     groups.push({ account, periodTotals, currentItems });

@@ -89,10 +89,19 @@ export interface Transaction {
   created_at: string;
 }
 
+// Parte de una persona en un gasto compartido, sobre el monto total del gasto.
+// Mi parte no se guarda: es amount - suma de partes (ver lib/utils/shares.ts).
+export interface ExpenseShare {
+  person_id: string;
+  person_name: string;
+  amount: number;
+}
+
 export interface TransactionWithRelations extends Transaction {
   category: Pick<Category, "name"> | null;
   person: Pick<Person, "name"> | null;
   source_account: Pick<Account, "name" | "type"> | null;
+  shares: ExpenseShare[]; // vacío si el gasto no es compartido
 }
 
 export interface Budget {
@@ -110,9 +119,12 @@ export interface BudgetWithCategory extends Budget {
 // Pagos que me hace de vuelta la persona dueña de un gasto que no es "Mío".
 // Cada uno corresponde a una cuota MSI marcada como pagada (installment_number
 // null solo en registros antiguos de antes de este esquema).
+// En un gasto compartido cada persona paga sus propias cuotas (person_id);
+// null = la persona dueña del gasto completo (transactions.person_id).
 export interface Reimbursement {
   id: string;
   expense_id: string;
+  person_id: string | null;
   installment_number: number | null;
   amount: number;
   date: string;

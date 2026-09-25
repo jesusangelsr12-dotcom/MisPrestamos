@@ -9,6 +9,7 @@ import { MSIExpenseItem } from "@/components/features/MSIExpenseItem";
 import { ReimbursementSheet } from "@/components/features/ReimbursementSheet";
 import { formatCurrency } from "@/lib/utils/finance";
 import type { TransactionWithRelations } from "@/types";
+import type { OwedParty } from "@/lib/utils/shares";
 
 function chipCls(active: boolean) {
   return `flex h-9 shrink-0 items-center rounded-full px-3.5 text-[13px] font-medium ${
@@ -20,7 +21,7 @@ export default function MSIExpensesPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<PersonFilter>("all");
   const { groups, people, reimbursedTotals, loading, error, refresh } = useMSIExpensesByCard(filter);
-  const [reimbursingExpense, setReimbursingExpense] = useState<TransactionWithRelations | null>(null);
+  const [reimbursing, setReimbursing] = useState<{ expense: TransactionWithRelations; party: OwedParty } | null>(null);
 
   return (
     <main className="min-h-screen px-5 pb-24 pt-safe">
@@ -87,8 +88,8 @@ export default function MSIExpensesPage() {
                     <MSIExpenseItem
                       key={item.transaction.id}
                       item={item}
-                      reimbursedTotal={reimbursedTotals[item.transaction.id] ?? 0}
-                      onOpenReimbursements={() => setReimbursingExpense(item.transaction)}
+                      reimbursedTotals={reimbursedTotals}
+                      onOpenReimbursements={(party) => setReimbursing({ expense: item.transaction, party })}
                     />
                   ))}
                 </div>
@@ -98,14 +99,15 @@ export default function MSIExpensesPage() {
         )}
       </motion.div>
 
-      {reimbursingExpense && (
+      {reimbursing && (
         <ReimbursementSheet
-          isOpen={!!reimbursingExpense}
-          onClose={() => setReimbursingExpense(null)}
-          expenseId={reimbursingExpense.id}
-          personName={reimbursingExpense.person?.name ?? ""}
-          totalAmount={reimbursingExpense.amount}
-          msiMonths={reimbursingExpense.msi_months}
+          isOpen={!!reimbursing}
+          onClose={() => setReimbursing(null)}
+          expenseId={reimbursing.expense.id}
+          personId={reimbursing.party.personId}
+          personName={reimbursing.party.name}
+          totalAmount={reimbursing.party.amount}
+          msiMonths={reimbursing.expense.msi_months}
           onChanged={refresh}
         />
       )}
